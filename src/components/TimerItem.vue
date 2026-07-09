@@ -1,17 +1,21 @@
 <script lang="ts" setup>
 import { onBeforeUnmount, onMounted, ref, computed, watch } from 'vue'
 
-const $props = withDefaults(defineProps<{
-	level: number
-	isWin: boolean
-	scale?: number
-}>(), {
-	scale: 1
-})
+const $props = withDefaults(
+	defineProps<{
+		level: number
+		isWin: boolean
+		scale?: number
+	}>(),
+	{
+		scale: 1,
+	}
+)
 
 const $emits = defineEmits(['timeend', 'addtimescore'])
 
 let timerId: ReturnType<typeof setInterval> | undefined
+let savedTime = 0
 
 const date = ref(0)
 const getTimeValue = computed(() => {
@@ -49,10 +53,12 @@ watch(
 
 onMounted(() => {
 	createTimer()
+	document.addEventListener('visibilitychange', handleVisibilityChange)
 })
 
 onBeforeUnmount(() => {
 	clearTimer()
+	document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 
 function createTimer() {
@@ -69,6 +75,16 @@ function createTimer() {
 
 function clearTimer() {
 	if (timerId) clearInterval(timerId)
+}
+
+function handleVisibilityChange() {
+	if (document.hidden) {
+		savedTime = date.value
+		clearTimer()
+	} else {
+		date.value = savedTime
+		createTimer()
+	}
 }
 </script>
 

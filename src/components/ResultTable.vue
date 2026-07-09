@@ -42,40 +42,44 @@ const $emits = defineEmits(['close'])
 
 	&__in {
 		position: relative;
-		padding: 65px 28px 68px;
+		padding: clamp(30px, 8vw, 65px) clamp(15px, 4vw, 28px) clamp(35px, 8vw, 68px);
 		border-radius: 12px;
-		height: 60vh;
-		width: 100%;
+		height: clamp(40vh, 60vh, 80vh);
+		width: clamp(280px, 90%, 40%);
 		box-sizing: border-box;
 		display: flex;
 		justify-content: space-around;
 		flex-direction: column;
 		align-items: center;
 		overflow: hidden;
-		margin-bottom: 100px;
-		width: 40%;
+		margin-bottom: clamp(50px, 10vh, 100px);
 		background: rgba(255, 255, 255, 0.3);
 		backdrop-filter: blur(3px);
 		border-radius: 18px;
-		font-size: 22px;
+		font-size: clamp(18px, 4vw, 22px);
+	}
+
+	&__title {
+		font-size: clamp(20px, 5vw, 28px);
+		text-align: center;
 	}
 
 	&__table {
-		width: 70%;
+		width: clamp(60%, 70%, 80%);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		flex-grow: 1;
-		padding-bottom: 30px;
+		padding-bottom: clamp(15px, 4vw, 30px);
 		letter-spacing: 3px;
-		font-size: 28px;
+		font-size: clamp(24px, 6vw, 28px);
 	}
 
 	&__btn {
 		flex-shrink: 0;
 		display: block;
-		width: 46px;
-		height: 46px;
+		width: clamp(36px, 8vw, 46px);
+		height: clamp(36px, 8vw, 46px);
 		background-color: transparent;
 		border-radius: 10px;
 		border: none;
@@ -83,6 +87,8 @@ const $emits = defineEmits(['close'])
 		background-size: cover;
 		background-color: transparent;
 		background-image: url('@/assets/img/home.png');
+		touch-action: manipulation;
+		-webkit-tap-highlight-color: transparent;
 	}
 }
 </style>

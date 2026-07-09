@@ -409,7 +409,7 @@ export function findNextPair(cur: [number, number], table: TYPE_GRID) {
 	const cols = table[0].length
 	const startRow = cur[1] === cols - 2 ? cur[0] + 1 : cur[0]
 
-	if (!startRow || startRow === rows - 1) return false
+	if (startRow >= rows - 1) return false
 
 	const curItem = table[cur[0]][cur[1]]
 

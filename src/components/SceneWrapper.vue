@@ -30,17 +30,14 @@ const styleObj = ref({
 
 function resize() {
 	let ratio = 1
-	let WH =
-			(window.innerHeight || screen.availHeight),
-		WW =
-			(window.innerWidth || screen.availWidth),
+	let WH = window.innerHeight || screen.availHeight,
+		WW = window.innerWidth || screen.availWidth,
 		RH = $props.height,
 		RW = $props.width
-	if (WW / WH < RW / RH) {
-		ratio = WW / RW
-	} else {
-		ratio = WH / RH
-	}
+
+	if (WW / WH < RW / RH) ratio = WW / RW
+	else ratio = WH / RH
+	
 	styleObj.value.transform = `scale(${ratio}) translate(-50%, -50%)`
 }
 

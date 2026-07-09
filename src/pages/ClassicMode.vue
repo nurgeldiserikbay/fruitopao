@@ -64,6 +64,7 @@ const getStyle = computed(() => (row: number, col: number, tile?: ITile) => {
 
 onMounted(async () => {
 	audioCont.play('gameMusic')
+	document.addEventListener('visibilitychange', handleVisibilityChange)
 
 	generateTable()
 
@@ -78,11 +79,20 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
 	audioCont.stop('gameMusic')
+	document.removeEventListener('visibilitychange', handleVisibilityChange)
 	clearTimers()
 	if (Capacitor.getPlatform() === 'android') {
 		Admob.removeBanner()
 	}
 })
+
+function handleVisibilityChange() {
+	if (document.hidden) {
+		audioCont.stop('gameMusic')
+	} else {
+		audioCont.play('gameMusic')
+	}
+}
 
 function addtimescore(scoreVal: number) {
 	score.value += scoreVal

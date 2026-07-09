@@ -23,11 +23,21 @@ const pageStore = usePageStore()
 
 onMounted(() => {
 	play('menuMusic')
+	document.addEventListener('visibilitychange', handleVisibilityChange)
 })
 
 onBeforeUnmount(() => {
 	stop('menuMusic')
+	document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
+
+function handleVisibilityChange() {
+	if (document.hidden) {
+		stop('menuMusic')
+	} else {
+		play('menuMusic')
+	}
+}
 </script>
 
 <template>

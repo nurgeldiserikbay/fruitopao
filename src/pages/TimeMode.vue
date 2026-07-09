@@ -65,6 +65,7 @@ const getStyle = computed(() => (row: number, col: number, tile?: ITile) => {
 
 onMounted(async () => {
 	audioCont.play('gameMusic')
+	document.addEventListener('visibilitychange', handleVisibilityChange)
 
 	generateTable()
 	fillEmptyTiles()
@@ -80,11 +81,20 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
 	audioCont.stop('gameMusic')
+	document.removeEventListener('visibilitychange', handleVisibilityChange)
 	clearTimers()
 	if (Capacitor.getPlatform() === 'android') {
 		Admob.removeBanner()
 	}
 })
+
+function handleVisibilityChange() {
+	if (document.hidden) {
+		audioCont.stop('gameMusic')
+	} else {
+		audioCont.play('gameMusic')
+	}
+}
 
 function animEnd() {
 	while (animOrders.length) {
@@ -232,7 +242,11 @@ function clearTiles() {
 	]
 	selectedPoint.value = undefined
 	secondPoint.value = undefined
-	if (freeCoords.value.length + 2 >= cols * rows) {
+	const remaining = tiles.value.reduce(
+		(acc, row) => acc + row.filter((tile) => tile !== null).length,
+		0
+	)
+	if (remaining === 0) {
 		isWin.value = true
 		isEnd.value = true
 

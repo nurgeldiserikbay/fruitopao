@@ -11,18 +11,42 @@ export const audioList: { [key: string]: string } = {
 	menuMusic: '/sounds/menu-music.mp3',
 }
 
+const sfxKeys = ['click', 'timeend', 'select', 'fail', 'remove', 'shuffle']
+const SFX_POOL_SIZE = 3
+
 const audioActive = ref(true)
 const musicActive = ref(true)
 
 let music: { [key: string]: HTMLAudioElement } = {}
 
+// Preloaded pool of SFX elements reused round-robin so we don't
+// allocate a brand new Audio() (with its own listeners) on every effect.
+const sfxPool: { [key: string]: HTMLAudioElement[] } = {}
+const sfxIndex: { [key: string]: number } = {}
+
+for (const key of sfxKeys) {
+	sfxPool[key] = []
+	sfxIndex[key] = 0
+	for (let i = 0; i < SFX_POOL_SIZE; i++) {
+		const audio = new Audio(audioList[key])
+		audio.preload = 'auto'
+		sfxPool[key].push(audio)
+	}
+}
+
 export const useAudio = () => {
 	function playAudio(audioType: string, anyway: boolean = false) {
 		if (!anyway && (!audioActive.value || !audioList[audioType])) return
 
-		if (audioList[audioType]) {
+		const pool = sfxPool[audioType]
+		if (pool) {
+			const audio = pool[sfxIndex[audioType]]
+			sfxIndex[audioType] = (sfxIndex[audioType] + 1) % pool.length
+			audio.currentTime = 0
+			audio.play().catch(() => {})
+		} else if (audioList[audioType]) {
 			const audio = new Audio(audioList[audioType])
-			audio.play()
+			audio.play().catch(() => {})
 		}
 	}
 
@@ -42,8 +66,6 @@ export const useAudio = () => {
 				audio.volume = 0
 			})
 		}
-
-		playAudio('break')
 	}
 
 	function play(name: string) {

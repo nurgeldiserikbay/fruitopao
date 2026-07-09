@@ -26,7 +26,7 @@ withDefaults(
 <style lang="scss" scoped>
 .ui-button {
 	display: inline-block;
-	width: 150px;
+	width: clamp(120px, 30vw, 150px);
 	aspect-ratio: 2.05;
 	border-radius: 18px;
 	border: none;
@@ -35,11 +35,11 @@ withDefaults(
 	font-family: LuckiestGuy;
 	font-weight: 700;
 	text-transform: uppercase;
-	font-size: 28px;
+	font-size: clamp(20px, 5vw, 28px);
 	line-height: 1;
 	letter-spacing: 2px;
-	padding-bottom: 15px;
-	padding-right: 5px;
+	padding-bottom: clamp(10px, 2vw, 15px);
+	padding-right: clamp(3px, 1vw, 5px);
 	box-sizing: border-box;
 	color: #ffffff;
 	-webkit-text-stroke: 2px #CC191C;
@@ -47,9 +47,11 @@ withDefaults(
 	background-color: transparent;
 	background-image: url('@/assets/img/button.png');
 	background-repeat: no-repeat;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
 
 	&--small {
-		font-size: 24px;
+		font-size: clamp(18px, 4vw, 24px);
 	}
 }
 </style>

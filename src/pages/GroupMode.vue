@@ -84,6 +84,7 @@ watch(
 
 onMounted(async () => {
 	audioCont.play('gameMusic')
+	document.addEventListener('visibilitychange', handleVisibilityChange)
 
 	generateTable()
 	selectType()
@@ -99,11 +100,20 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
 	audioCont.stop('gameMusic')
+	document.removeEventListener('visibilitychange', handleVisibilityChange)
 	clearTimers()
 	if (Capacitor.getPlatform() === 'android') {
 		Admob.removeBanner()
 	}
 })
+
+function handleVisibilityChange() {
+	if (document.hidden) {
+		audioCont.stop('gameMusic')
+	} else {
+		audioCont.play('gameMusic')
+	}
+}
 
 function selectType() {
 	let tile: ITile | null = null
@@ -335,31 +345,13 @@ function clearTimers() {
 	}
 
 	&__tile {
-		width: 32px;
+		width: clamp(24px, 6vw, 32px);
 		aspect-ratio: 1.156;
 
 		img {
 			display: block;
 			width: 100%;
 			height: 100%;
-		}
-	}
-
-	&__reload {
-		display: flex;
-		align-items: center;
-		gap: 5px;
-
-		button {
-			width: 30px;
-			height: 30px;
-			border-radius: 8px;
-			border: none;
-			cursor: pointer;
-			transition: 0.3s linear;
-			background-size: cover;
-			background-color: transparent;
-			background-image: url('@/assets/img/reload.png');
 		}
 	}
 
