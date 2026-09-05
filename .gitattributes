@@ -1,0 +1,24 @@
+# Единые окончания строк в репозитории.
+# Без этого правка из другого редактора или агента переводит файл целиком
+# CRLF <-> LF, и git показывает диффом весь файл вместо реально изменённых строк.
+* text=auto eol=lf
+
+# Бинарные файлы не нормализуем и не пытаемся сливать построчно
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.ico   binary
+*.mp3   binary
+*.ttf   binary
+*.woff  binary
+*.woff2 binary
+*.jar   binary
+*.apk   binary
+*.aab   binary
+*.keystore binary
+*.jks   binary
+
+# Windows-скрипты остаются с CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
