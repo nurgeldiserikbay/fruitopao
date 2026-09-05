@@ -9,7 +9,6 @@ import TimerItem from '@/components/TimerItem.vue'
 import ResultTable from '@/components/ResultTable.vue'
 
 import { usePageStore } from '@/store/pageStore'
-import { useAdsStore } from '@/store/adsStore'
 
 import Admob from '@/utils/admob'
 import { ICoord, ITile, TYPE_GRID, TYPE_PATH } from '@/utils/types'
@@ -24,7 +23,6 @@ import {
 } from './game'
 
 const pageStore = usePageStore()
-const adsStore = useAdsStore()
 const audioCont = useAudio()
 
 const cols = 16
@@ -108,19 +106,9 @@ function next() {
 }
 
 function nextLevel() {
-	if (Capacitor.getPlatform() === 'android') {
-		if (adsStore.loading) return
-		adsStore.toggleLoading(true)
-		Admob.interstitial({
-			isFirst: false,
-			onInterstitialAdClosed: () => {
-				adsStore.toggleLoading(false)
-				next()
-			},
-		})
-	} else {
-		next()
-	}
+	// Никакой рекламы на этом пути: переход на следующий уровень запускает игрок.
+	// Показ перенесён на завершение уровня.
+	next()
 }
 
 function morphTable(emptyPoint: TYPE_PATH) {
@@ -171,6 +159,14 @@ function clearTiles() {
 	if (freeCoords.value.length === cols * rows) {
 		isWin.value = true
 		isEnd.value = true
+
+		// Уровень пройден, экран итога уже показан — естественная пауза. Раньше
+		// показ висел на кнопке перехода: объявление выходило в момент начала
+		// следующего уровня, и сам уровень ждал его закрытия. Google называет это
+		// недопустимым. Частоту ограничивает рекламный модуль.
+		if (Capacitor.getPlatform() === 'android') {
+			void Admob.interstitial()
+		}
 
 		return
 	}

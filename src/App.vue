@@ -16,7 +16,7 @@ const pageStore = usePageStore()
 
 onMounted(async () => {
 	if (Capacitor.getPlatform() === 'android') {
-		Admob.initialize()
+		void Admob.initialize().catch(() => {})
 	}
 
 	if (Capacitor.getPlatform() === 'android') {
