@@ -34,6 +34,10 @@ const getWidth = computed(() => {
 	return `${(date.value / getTimeValue.value) * 100}%`
 })
 
+// Последняя пятая часть запаса: полоса становится коралловой и пульсирует.
+// Раньше единственным сигналом об исходе времени был звук в самом конце.
+const isLow = computed(() => date.value / getTimeValue.value <= 0.2)
+
 watch(
 	() => $props.isWin,
 	() => {
@@ -92,6 +96,7 @@ function handleVisibilityChange() {
 	<div class="time">
 		<div
 			class="time__in"
+			:class="{ 'time__in--low': isLow }"
 			:style="{
 				width: getWidth,
 			}"
@@ -107,14 +112,39 @@ function handleVisibilityChange() {
 	height: 20px;
 	text-align: center;
 	border-radius: 5px;
-	border: 1px solid hsl(65, 100%, 50%);
+	border: 1px solid rgba(255, 255, 255, 0.7);
+	background: rgba(54, 55, 105, 0.16);
+	overflow: hidden;
 
 	&__in {
 		position: relative;
 		border-radius: 5px;
 		height: 100%;
-		background: hsl(60, 100%, 50%);
-		filter: drop-shadow(0 0 5px hsl(67, 100%, 61%));
+		background: linear-gradient(90deg, #2fbf7a, #8fd94a);
+		transition: background 0.3s linear;
+
+		// drop-shadow пересчитывался каждые 100 мс вместе с шириной полосы —
+		// на слабых Android это самый дорогой из возможных вариантов свечения.
+		&--low {
+			background: linear-gradient(90deg, #ff7c72, #ffab6b);
+			animation: time-low 0.9s ease-in-out infinite;
+		}
+	}
+
+	@keyframes time-low {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.55;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&__in--low {
+			animation: none;
+		}
 	}
 }
 </style>

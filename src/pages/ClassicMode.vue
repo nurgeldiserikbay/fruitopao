@@ -7,12 +7,17 @@ import UiButton from '@/components/UiButton.vue'
 import BackLink from '@/components/BackLink.vue'
 import TimerItem from '@/components/TimerItem.vue'
 import ResultTable from '@/components/ResultTable.vue'
+import TileEffects from '@/components/TileEffects.vue'
 
 import { usePageStore } from '@/store/pageStore'
+import { useScoreStore } from '@/store/scoreStore'
 
 import Admob from '@/utils/admob'
 import { ICoord, ITile, TYPE_GRID, TYPE_PATH } from '@/utils/types'
 import { useAudio } from '@/composables/useAudio'
+import { useTileEffects } from '@/composables/useTileEffects'
+
+import { PAGES } from '@/utils/conts'
 
 import {
 	generateBoard,
@@ -23,7 +28,9 @@ import {
 } from './game'
 
 const pageStore = usePageStore()
+const scoreStore = useScoreStore()
 const audioCont = useAudio()
+const { effects, sparkle, score: popScore } = useTileEffects()
 
 const cols = 16
 const rows = 8
@@ -43,6 +50,7 @@ const freeCoords = ref<ICoord[]>([])
 const tiles = shallowRef<TYPE_GRID>([])
 const selectedPoint = ref<ICoord>()
 const secondPoint = ref<ICoord>()
+const failPoint = ref<ICoord>()
 const selectedTile = computed(() => {
 	return (
 		selectedPoint.value &&
@@ -134,7 +142,7 @@ function runShuffle(tilesGrid: TYPE_GRID, hard: boolean = false) {
 	}
 	if (suffled && !hard) shuffleCount.value = shuffleCount.value - 1
 	if (isNotMove) {
-		isEnd.value = true
+		endRun()
 	} else {
 		tiles.value = [...tilesGrid]
 	}
@@ -144,6 +152,8 @@ function clearTiles() {
 	if (!selectedPoint.value || !secondPoint.value) return
 
 	audioCont.playAudio('remove')
+	sparkle(secondPoint.value.row, secondPoint.value.col)
+	popScore(secondPoint.value.row, secondPoint.value.col, 20)
 	tiles.value[selectedPoint.value.row][selectedPoint.value.col] = null
 	tiles.value[secondPoint.value.row][secondPoint.value.col] = null
 	score.value += 20
@@ -231,6 +241,7 @@ async function tilePair(point: ICoord) {
 		moveTileByCoords(elem, pathPair.slice(1), clearTiles)
 	} else {
 		audioCont.playAudio('fail')
+		markFail(point)
 		selectedPoint.value = undefined
 	}
 }
@@ -259,7 +270,25 @@ function generateTable() {
 
 function timeend() {
 	audioCont.playAudio('timeend')
+	endRun()
+}
+
+// Единая точка завершения: рекорд надо записать и когда вышло время, и когда
+// не осталось ходов, — иначе половина партий в статистику не попадает.
+function endRun() {
 	isEnd.value = true
+	scoreStore.submit(PAGES.CLASSIC, score.value)
+}
+
+// Подсветка промаха живёт ~200 мс: ровно на длительность анимации, дальше
+// класс снимается, иначе контур останется висеть на фишке.
+function markFail(point: ICoord) {
+	failPoint.value = point
+	clearTimeout(timers['2'])
+	timers['2'] = setTimeout(() => {
+		failPoint.value = undefined
+		delete timers['2']
+	}, 200)
 }
 
 function clearTimers() {
@@ -304,6 +333,7 @@ function clearTimers() {
 						}"
 						:class="{
 							'tile--active': tile?.key === selectedTile?.key,
+							'tile--fail': failPoint?.row === row && failPoint?.col === col,
 						}"
 						:row="row"
 						:col="col"
@@ -319,6 +349,12 @@ function clearTimers() {
 					></div>
 				</template>
 			</template>
+
+			<TileEffects
+				:effects="effects"
+				:cell-width="width"
+				:cell-height="height"
+			/>
 		</div>
 
 		<UiButton
@@ -458,6 +494,7 @@ function clearTimers() {
 		background-repeat: no-repeat;
 
 		@include tile-overlay(url('@/assets/redesign/overlays/tile-selected.svg'));
+		@include tile-fail;
 	}
 }
 </style>

@@ -13,17 +13,24 @@ import UiButton from '@/components/UiButton.vue'
 import BackLink from '@/components/BackLink.vue'
 import TimerItem from '@/components/TimerItem.vue'
 import ResultTable from '@/components/ResultTable.vue'
+import TileEffects from '@/components/TileEffects.vue'
 
 import { usePageStore } from '@/store/pageStore'
+import { useScoreStore } from '@/store/scoreStore'
 
 import Admob from '@/utils/admob'
 import { ICoord, ITile, TYPE_GRID, TYPE_PATH } from '@/utils/types'
 import { useAudio } from '@/composables/useAudio'
+import { useTileEffects } from '@/composables/useTileEffects'
+
+import { PAGES } from '@/utils/conts'
 
 import { generateBoard, modifyTable, randomInt } from './game'
 
 const pageStore = usePageStore()
+const scoreStore = useScoreStore()
 const audioCont = useAudio()
+const { effects, sparkle, score: popScore } = useTileEffects()
 
 const cols = 16
 const rows = 8
@@ -42,6 +49,8 @@ const freeCoords = ref<ICoord[]>([])
 const tiles = shallowRef<TYPE_GRID>([])
 const selectedTileType = ref<number | null>(null)
 const selectedPoints = ref<ICoord[]>([])
+const failPoint = ref<ICoord>()
+const targetBeat = ref(false)
 const selectedTileCount = computed(() => {
 	return tiles.value.reduce((total, row) => {
 		total += row.reduce((t2, col) => {
@@ -155,6 +164,13 @@ function runShuffle(tilesGrid: TYPE_GRID) {
 function clearTiles() {
 	if (!selectedPoints.value.length) return
 	audioCont.playAudio('remove')
+
+	// Искры на каждой снятой фишке, но всплывающие очки — одни, суммой:
+	// шесть отдельных «+20» друг на друге не читаются.
+	const last = selectedPoints.value[selectedPoints.value.length - 1]
+	selectedPoints.value.forEach((tile) => sparkle(tile.row, tile.col))
+	popScore(last.row, last.col, selectedPoints.value.length * 20)
+
 	const emptyPoint: TYPE_PATH = []
 	selectedPoints.value.forEach((tile) => {
 		tiles.value[tile.row][tile.col] = null
@@ -209,11 +225,13 @@ function clickTile(coord: ICoord) {
 		return
 	if (selectedTile.type !== selectedTileType.value) {
 		audioCont.playAudio('fail')
+		markFail(coord)
 		selectedPoints.value = []
 		return
 	}
 	audioCont.playAudio('select')
 	selectedPoints.value.push(coord)
+	beatTarget()
 }
 
 function generateTable() {
@@ -224,6 +242,31 @@ function generateTable() {
 function timeend() {
 	audioCont.playAudio('timeend')
 	isEnd.value = true
+	scoreStore.submit(PAGES.GROUP, score.value)
+}
+
+// Подсветка промаха держится ровно на длительность анимации.
+function markFail(point: ICoord) {
+	failPoint.value = point
+	clearTimeout(timers['3'])
+	timers['3'] = setTimeout(() => {
+		failPoint.value = undefined
+		delete timers['3']
+	}, 200)
+}
+
+// Цель в шапке коротко отзывается на каждый верный тап: иначе не видно, что
+// счётчик связан с нажатием по полю.
+function beatTarget() {
+	targetBeat.value = false
+	requestAnimationFrame(() => {
+		targetBeat.value = true
+	})
+	clearTimeout(timers['4'])
+	timers['4'] = setTimeout(() => {
+		targetBeat.value = false
+		delete timers['4']
+	}, 200)
 }
 
 function clearTimers() {
@@ -245,7 +288,7 @@ function clearTimers() {
 				@timeend="timeend"
 			/>
 			<div class="page__info">
-				<div class="page__target">
+				<div :class="{ 'page__target--beat': targetBeat }" class="page__target">
 					<div class="page__tile">
 						<img
 							v-if="selectedTileType !== null"
@@ -276,6 +319,7 @@ function clearTimers() {
 						}"
 						:class="{
 							'tile--active': isSelected(row, col),
+							'tile--fail': failPoint?.row === row && failPoint?.col === col,
 						}"
 						:row="row"
 						:col="col"
@@ -291,6 +335,12 @@ function clearTimers() {
 					></div>
 				</template>
 			</template>
+
+			<TileEffects
+				:effects="effects"
+				:cell-width="width"
+				:cell-height="height"
+			/>
 		</div>
 
 		<UiButton
@@ -373,6 +423,10 @@ function clearTimers() {
 		align-items: center;
 		gap: 8px;
 
+		&--beat {
+			animation: target-beat 0.19s ease-out;
+		}
+
 		&-count {
 			font-size: 16px;
 			letter-spacing: 1px;
@@ -448,6 +502,23 @@ function clearTimers() {
 		background-repeat: no-repeat;
 
 		@include tile-overlay(url('@/assets/redesign/overlays/tile-group-selected.svg'));
+		@include tile-fail;
+	}
+}
+
+@keyframes target-beat {
+	0%,
+	100% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.08);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.page__target--beat {
+		animation: none;
 	}
 }
 </style>

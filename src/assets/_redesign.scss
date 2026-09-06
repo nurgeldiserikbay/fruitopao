@@ -7,6 +7,7 @@
 $plate: rgba(54, 55, 105, 0.16);
 $selectAccent: #30e6b0;
 $groupAccent: #ffc94d;
+$failAccent: #ff7c72;
 
 // Фон экрана. Перекрывает повторяющийся паттерн из body: сцена 720x405 — это
 // 16:9, фоны сделаны под то же соотношение, поэтому cover не режет края.
@@ -80,4 +81,80 @@ $groupAccent: #ffc94d;
 	color: #000;
 	letter-spacing: 2px;
 	white-space: nowrap;
+}
+
+// Промах: два коротких сдвига и коралловый контур.
+//
+// Сдвиг делаем отдельным свойством translate, а не transform. Это разные
+// свойства: translate применяется поверх transform, не затирая инлайновую
+// раскладку сетки. Через transform шейк бы просто проиграл инлайновому стилю.
+@mixin tile-fail {
+	&--fail {
+		z-index: 9;
+		outline: 3px solid $failAccent;
+		outline-offset: -4px;
+		border-radius: 12px;
+		animation: tile-fail 0.18s linear;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&--fail {
+			animation: none;
+		}
+	}
+}
+
+@keyframes tile-fail {
+	0%,
+	100% {
+		translate: 0;
+	}
+	25% {
+		translate: -3px;
+	}
+	75% {
+		translate: 3px;
+	}
+}
+
+// Появление подсеянной пары в Time.
+//
+// Спецификация просит scale .7 -> 1.06 -> 1, но у фишки transform занят, а
+// отдельное свойство scale здесь не спасает: оно применяется ПОСЛЕ transform и
+// домножило бы позицию в сетке, разбросав фишки. Растим сам фрукт через
+// background-size — визуально то же «выросло из клетки», позиции не касается.
+@mixin tile-seeded {
+	&--seeded {
+		animation: tile-seeded 0.24s ease-out;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&--seeded {
+			animation: tile-seeded-fade 0.1s linear;
+		}
+	}
+}
+
+@keyframes tile-seeded {
+	0% {
+		background-size: 55% 55%;
+		opacity: 0;
+	}
+	60% {
+		background-size: 110% 110%;
+		opacity: 1;
+	}
+	100% {
+		background-size: 100% 100%;
+		opacity: 1;
+	}
+}
+
+@keyframes tile-seeded-fade {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
 }

@@ -7,9 +7,12 @@ import UiButton from '@/components/UiButton.vue'
 import BackLink from '@/components/BackLink.vue'
 import TimerItem from '@/components/TimerItem.vue'
 import ResultTable from '@/components/ResultTable.vue'
+import TileEffects from '@/components/TileEffects.vue'
 
 import { usePageStore } from '@/store/pageStore'
+import { useScoreStore } from '@/store/scoreStore'
 import { useAudio } from '@/composables/useAudio'
+import { useTileEffects } from '@/composables/useTileEffects'
 import Admob from '@/utils/admob'
 import { ICoord, ITile, TYPE_GRID, TYPE_PATH } from '@/utils/types'
 
@@ -21,10 +24,12 @@ import {
 	randomInt,
 	shuffleTable,
 } from './game'
-import { TYPE } from '@/utils/conts'
+import { TYPE, PAGES } from '@/utils/conts'
 
 const pageStore = usePageStore()
+const scoreStore = useScoreStore()
 const audioCont = useAudio()
+const { effects, sparkle, score: popScore } = useTileEffects()
 
 const cols = 16
 const rows = 8
@@ -44,6 +49,14 @@ const freeCoords = ref<ICoord[]>([])
 const tiles = shallowRef<TYPE_GRID>([])
 const selectedPoint = ref<ICoord>()
 const secondPoint = ref<ICoord>()
+const failPoint = ref<ICoord>()
+const seededKeys = ref<number[]>([])
+
+// Отсчёт до подсева. Раньше пары появлялись без предупреждения и читались как
+// случайная помеха — кольцо показывает, что это часть правил режима.
+const seedLeft = ref(100)
+const seedSoon = ref(false)
+let seedTicker: ReturnType<typeof setInterval> | undefined
 const selectedTile = computed(() => {
 	return (
 		selectedPoint.value &&
@@ -80,6 +93,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
 	audioCont.stop('gameMusic')
 	document.removeEventListener('visibilitychange', handleVisibilityChange)
+	stopSeedCountdown()
 	clearTimers()
 	if (Capacitor.getPlatform() === 'android') {
 		Admob.removeBanner()
@@ -112,20 +126,26 @@ function fillCoords() {
 			1
 		)[0]
 		const type = randomInt(0, TYPE)
+		const firstKey = new Date().getTime() + randomInt(0, 100000)
+		const secondKey = firstKey + 1
 
 		tiles.value = tiles.value.map((list, row) => {
 			return list.map((item, col) => {
-				if (
-					(firstPos.row === row && firstPos.col === col) ||
-					(secondPos.row === row && secondPos.col === col)
-				)
-					return {
-						key: new Date().getTime() + randomInt(0, 100000),
-						type: type,
-					}
+				if (firstPos.row === row && firstPos.col === col)
+					return { key: firstKey, type }
+				if (secondPos.row === row && secondPos.col === col)
+					return { key: secondKey, type }
 				return item
 			})
 		})
+
+		// Метка для анимации появления: снимается, когда анимация отыграла.
+		seededKeys.value = [firstKey, secondKey]
+		clearTimeout(timers['4'])
+		timers['4'] = setTimeout(() => {
+			seededKeys.value = []
+			delete timers['4']
+		}, 300)
 		runShuffle(
 			morphTable([
 				[firstPos.row, firstPos.col],
@@ -143,6 +163,8 @@ function fillEmptyTiles() {
 		Math.round(35000 / Math.cbrt(freeCoords.value.length + 2))
 	)
 
+	startSeedCountdown(time)
+
 	timers['2'] = setTimeout(() => {
 		if (isAnimate.value) {
 			animOrders.push(fillCoords)
@@ -150,6 +172,35 @@ function fillEmptyTiles() {
 		}
 		fillCoords()
 	}, time)
+}
+
+function startSeedCountdown(duration: number) {
+	const endAt = Date.now() + duration
+	seedLeft.value = 100
+	seedSoon.value = false
+
+	if (seedTicker) clearInterval(seedTicker)
+	seedTicker = setInterval(() => {
+		const left = Math.max(0, endAt - Date.now())
+		seedLeft.value = (left / duration) * 100
+		seedSoon.value = left > 0 && left <= 1500
+		if (left === 0) stopSeedCountdown()
+	}, 100)
+}
+
+function stopSeedCountdown() {
+	if (seedTicker) clearInterval(seedTicker)
+	seedTicker = undefined
+}
+
+// Подсветка промаха держится ровно на длительность анимации.
+function markFail(point: ICoord) {
+	failPoint.value = point
+	clearTimeout(timers['3'])
+	timers['3'] = setTimeout(() => {
+		failPoint.value = undefined
+		delete timers['3']
+	}, 200)
 }
 
 function addtimescore(scoreVal: number) {
@@ -194,7 +245,7 @@ function runShuffle(tilesGrid: TYPE_GRID, hard: boolean = false) {
 	}
 	if (suffled && !hard) shuffleCount.value = shuffleCount.value - 1
 	if (isNotMove) {
-		isEnd.value = true
+		endRun()
 	} else {
 		tiles.value = [...tilesGrid]
 	}
@@ -221,6 +272,8 @@ function clearTiles() {
 	if (!selectedPoint.value || !secondPoint.value) return
 
 	audioCont.playAudio('remove')
+	sparkle(secondPoint.value.row, secondPoint.value.col)
+	popScore(secondPoint.value.row, secondPoint.value.col, 20)
 	tiles.value[selectedPoint.value.row][selectedPoint.value.col] = null
 	tiles.value[secondPoint.value.row][secondPoint.value.col] = null
 	score.value += 20
@@ -311,6 +364,7 @@ async function tilePair(point: ICoord) {
 		moveTileByCoords(elem, pathPair.slice(1), clearTiles)
 	} else {
 		audioCont.playAudio('fail')
+		markFail(point)
 		selectedPoint.value = undefined
 	}
 }
@@ -339,7 +393,14 @@ function generateTable() {
 
 function timeend() {
 	audioCont.playAudio('timeend')
+	endRun()
+}
+
+// Рекорд пишем и по концу времени, и когда не осталось ходов.
+function endRun() {
 	isEnd.value = true
+	stopSeedCountdown()
+	scoreStore.submit(PAGES.TIME, score.value)
 }
 
 function clearTimers() {
@@ -360,6 +421,12 @@ function clearTimers() {
 				@timeend="timeend"
 			/>
 			<div class="page__info">
+				<div
+					:class="{ 'page__seed--soon': seedSoon }"
+					:style="{ '--seed': `${seedLeft}%` }"
+					class="page__seed"
+				></div>
+
 				<div class="page__reload" @click="hardShuffle">
 					<span>{{ shuffleCount }}</span>
 					<button></button>
@@ -384,6 +451,8 @@ function clearTimers() {
 						}"
 						:class="{
 							'tile--active': tile?.key === selectedTile?.key,
+							'tile--fail': failPoint?.row === row && failPoint?.col === col,
+							'tile--seeded': !!tile && seededKeys.includes(tile.key),
 						}"
 						:row="row"
 						:col="col"
@@ -399,6 +468,12 @@ function clearTimers() {
 					></div>
 				</template>
 			</template>
+
+			<TileEffects
+				:effects="effects"
+				:cell-width="width"
+				:cell-height="height"
+			/>
 		</div>
 
 		<UiButton
@@ -433,6 +508,38 @@ function clearTimers() {
 		font-size: 18px;
 
 		@include hud-pill;
+	}
+
+	// Кольцо отсчёта до подсева. Убывающий сектор режем маской: сам ассет
+	// статичный, а conic-gradient даёт круговой отсчёт без лишней разметки.
+	&__seed {
+		flex-shrink: 0;
+		width: 24px;
+		height: 24px;
+		background: url('@/assets/redesign/overlays/time-seed-ring.svg') center /
+			contain no-repeat;
+		mask-image: conic-gradient(#000 var(--seed, 100%), transparent 0);
+		-webkit-mask-image: conic-gradient(#000 var(--seed, 100%), transparent 0);
+
+		&--soon {
+			animation: seed-pulse 0.75s ease-in-out;
+		}
+	}
+
+	@keyframes seed-pulse {
+		0%,
+		100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.18);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&__seed--soon {
+			animation: none;
+		}
 	}
 
 	// Таймер стоит между фиксированными плашками, поэтому забирает остаток
@@ -538,6 +645,8 @@ function clearTimers() {
 		background-repeat: no-repeat;
 
 		@include tile-overlay(url('@/assets/redesign/overlays/tile-selected.svg'));
+		@include tile-fail;
+		@include tile-seeded;
 	}
 }
 </style>

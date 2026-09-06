@@ -1,4 +1,16 @@
 <script lang="ts" setup>
+import { computed } from 'vue'
+
+import { usePageStore } from '@/store/pageStore'
+import { useScoreStore } from '@/store/scoreStore'
+
+const pageStore = usePageStore()
+const scoreStore = useScoreStore()
+
+// Рекорд берём по текущему режиму: карточка итога живёт внутри страницы
+// режима, так что currentPage — это и есть режим сыгранной партии.
+const best = computed(() => scoreStore.bestOf(pageStore.currentPage))
+
 withDefaults(
 	defineProps<{
 		result: number
@@ -16,6 +28,7 @@ const $emits = defineEmits(['close'])
 			<div class="result__table">
 				<div>{{ result }}</div>
 			</div>
+			<div v-if="best" class="result__best">BEST {{ best }}</div>
 			<button class="result__btn" @click="$emits('close')" />
 		</div>
 	</div>
@@ -84,6 +97,13 @@ const $emits = defineEmits(['close'])
 		padding-bottom: clamp(15px, 4vw, 30px);
 		letter-spacing: 3px;
 		font-size: clamp(24px, 6vw, 28px);
+	}
+
+	&__best {
+		padding-bottom: clamp(10px, 3vw, 20px);
+		font-size: clamp(14px, 3.5vw, 18px);
+		letter-spacing: 2px;
+		opacity: 0.75;
 	}
 
 	&__btn {
