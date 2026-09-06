@@ -33,8 +33,11 @@ const scoreStore = useScoreStore()
 const audioCont = useAudio()
 const { effects, sparkle, score: popScore, dissolve } = useTileEffects()
 
-const cols = 16
-const rows = 8
+// Поле уменьшено с 16x8: 128 фишек на телефоне в ландшафте давали слишком
+// мелкую цель для пальца. 12x6 — это 72 фишки и клетка примерно на треть
+// крупнее. Пар по-прежнему целое число, остальная логика от размера не зависит.
+const cols = 12
+const rows = 6
 const width = 100 / (cols + 2)
 const height = 100 / (rows + 2)
 
