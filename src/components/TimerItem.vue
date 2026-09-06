@@ -94,11 +94,7 @@ function handleVisibilityChange() {
 
 <template>
 	<div class="time">
-		<img
-			class="time__icon"
-			src="@/assets/redesign/icons/clock.svg?url"
-			alt=""
-		/>
+		<span class="time__icon"></span>
 		<div class="time__track">
 			<div
 				class="time__in"
@@ -119,14 +115,19 @@ function handleVisibilityChange() {
 	width: 80%;
 	font-size: 14px;
 	box-sizing: border-box;
-	height: 22px;
+	height: 18px;
 
 	// Часы — обычный элемент строки, а не абсолютный: рядом стоит номер
 	// уровня, и вынос за границу полосы наезжал на подпись.
+	// Иконка одноцветная и белая: на светлой капсуле красим её маской.
 	&__icon {
 		width: 20px;
 		height: 20px;
 		flex-shrink: 0;
+		background-color: #123d66;
+		mask: url('@/assets/redesign/icons/clock.svg') center / contain no-repeat;
+		-webkit-mask: url('@/assets/redesign/icons/clock.svg') center / contain
+			no-repeat;
 	}
 
 	&__track {

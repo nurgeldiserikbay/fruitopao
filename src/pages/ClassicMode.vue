@@ -37,6 +37,10 @@ const { effects, sparkle, score: popScore, dissolve } = useTileEffects()
 // Поле уменьшено с 16x8: 128 фишек на телефоне в ландшафте давали слишком
 // мелкую цель для пальца. 12x6 — это 72 фишки и клетка примерно на треть
 // крупнее. Пар по-прежнему целое число, остальная логика от размера не зависит.
+// Цвет плитки берётся по стабильному правилу type % 4 — так одинаковые
+// фрукты всегда одного цвета, и поле читается как цветная сетка.
+const TILE_COLORS = ['aqua', 'mint', 'coral', 'lemon']
+
 const cols = 12
 const rows = 6
 // Контейнер поля считаем по видимой сетке, без служебной рамки. Рамка нужна
@@ -374,6 +378,7 @@ function clearTimers() {
 							...getStyle(row, col, tile),
 						}"
 						:class="{
+							[`tile--${TILE_COLORS[tile.type % 4]}`]: true,
 							'tile--active': tile?.key === selectedTile?.key,
 							'tile--fail': failPoint?.row === row && failPoint?.col === col,
 							'tile--shuffling': isShuffling,
@@ -425,13 +430,14 @@ function clearTimers() {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	padding: 12px 15px 68px;
+	// 10 сверху и 58 снизу: HUD начинается на y=10, ниже y=347 остаётся
+	// свободная полоса под нативный адаптивный баннер.
+	padding: 10px 15px 58px;
 
 	&__level {
-		flex-shrink: 0;
 		font-size: 18px;
-		letter-spacing: 2px;
-		white-space: nowrap;
+
+		@include hud-capsule;
 	}
 
 	// Таймер стоит между фиксированными плашками, поэтому забирает остаток
@@ -441,76 +447,70 @@ function clearTimers() {
 		flex: 1 1 auto;
 		width: auto;
 		min-width: 0;
+
+		@include hud-capsule;
+
+		// Торцы капсулы скруглены (rx=26 при высоте 64 в hud-pill.svg), поэтому
+		// полосе нужен отступ больше обычного: с 14px заливка выезжала на
+		// скругление и выглядела вылезшей за пределы капсулы.
+		padding: 0 22px;
 	}
 
 	// Общая стеклянная плашка из набора. Панель тёмно-синяя, поэтому весь
 	// текст и иконки в шапке светлые: чёрный на ней не читался.
+	// Шапка — не панель, а ряд отдельных капсул: одна длинная плашка на
+	// телефоне сливалась в полосу, из которой ничего не вычитывается.
 	&__head {
 		position: relative;
 		z-index: 300;
 		display: flex;
-		justify-content: space-between;
+		justify-content: center;
 		align-items: center;
-		// Зазор 14, а не 22: в шапке прибавились тумблеры звука.
-		gap: 14px;
+		gap: 8px;
 		width: min(100%, 650px);
 		margin-inline: auto;
 		min-height: 52px;
 		box-sizing: border-box;
-		// Отступ рассчитан на скругление панели (radius 30 в hud-panel.svg):
-		// при меньшем крайние иконки визуально подрезаются углом.
-		padding: 0 26px;
-		margin-bottom: 8px;
-		color: #fff;
-
-		// CSS-эквивалент hud-panel.svg вместо самого файла: у ассета фиксированные
-		// пропорции 720x76, а SVG в background-size: 100% 100% не растягивается —
-		// preserveAspectRatio по умолчанию вписывает его с полями, и панель
-		// рисовалась заметно уже шапки, обрезая крайние иконки.
-		background: rgba(23, 61, 105, 0.72);
-		border: 4px solid rgba(255, 255, 255, 0.72);
-		border-radius: 30px;
-		backdrop-filter: blur(3px);
+		color: $navy;
 	}
 
+	// Обёртка больше ничего не рисует: капсулами стали сами счётчики.
 	&__info {
 		box-sizing: border-box;
 		flex-shrink: 0;
 		display: flex;
 		justify-content: flex-end;
 		align-items: center;
-		gap: 15px;
-		color: #fff;
-		font-size: 22px;
-		letter-spacing: 2px;
+		gap: 8px;
+		font-size: 20px;
 	}
 
 	&__reload {
-		display: flex;
-		align-items: center;
-		gap: 5px;
+		cursor: pointer;
+
+		@include hud-capsule;
 
 		button {
-			width: 30px;
-			height: 30px;
-			border-radius: 8px;
+			width: 26px;
+			height: 26px;
 			border: none;
 			cursor: pointer;
-			transition: 0.3s linear;
-			background-size: cover;
-			background-color: transparent;
-			background-image: url('@/assets/redesign/icons/shuffle.svg');
+			padding: 0;
+			// Иконка одноцветная и белая: на светлой капсуле красим её маской.
+			background-color: $navy;
+			mask: url('@/assets/redesign/icons/shuffle.svg') center / contain
+				no-repeat;
+			-webkit-mask: url('@/assets/redesign/icons/shuffle.svg') center /
+				contain no-repeat;
 		}
 	}
 
 	&__score {
-		display: flex;
-		align-items: center;
-		gap: 5px;
+		@include hud-capsule;
 
 		img {
-			width: 20px;
-			height: 20px;
+			width: 22px;
+			height: 22px;
 			display: block;
 		}
 	}
@@ -526,14 +526,14 @@ function clearTimers() {
 
 .tiles {
 	position: relative;
+	// Геометрия из handoff: поле 580x285 в зоне y 62–347, ниже 352 —
+	// safe-zone нативного баннера, туда не должен попадать игровой UI.
 	width: min(100%, 580px);
-	aspect-ratio: 2;
+	aspect-ratio: 580 / 285;
 	max-width: 580px;
 	margin-inline: auto;
 	box-sizing: border-box;
 	@include board-plate;
-
-	transform: translateY(-15px);
 
 	.tile {
 		position: absolute;

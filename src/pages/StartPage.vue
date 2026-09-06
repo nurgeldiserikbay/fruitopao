@@ -51,18 +51,21 @@ function handleVisibilityChange() {
 			<div class="start-page__btns">
 				<UiButton
 					:icon="classicIcon"
+					tone="aqua"
 					@click="pageStore.routeTo(PAGES.CLASSIC), playAudio('click')"
 				>
 					Classic
 				</UiButton>
 				<UiButton
 					:icon="clockIcon"
+					tone="coral"
 					@click="pageStore.routeTo(PAGES.TIME), playAudio('click')"
 				>
 					Time
 				</UiButton>
 				<UiButton
 					:icon="groupIcon"
+					tone="lemon"
 					@click="pageStore.routeTo(PAGES.GROUP), playAudio('click')"
 				>
 					Group

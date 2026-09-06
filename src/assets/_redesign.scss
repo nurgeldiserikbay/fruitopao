@@ -1,4 +1,6 @@
-// Визуальное обновление по спецификации _gpt-brief/redesign/README.md.
+@import './redesign-v2/tokens';
+
+// Визуальное обновление по спецификации _gpt-brief/design-v2/README.md.
 //
 // Миксины лежат здесь, а не копиями в страницах: разметка поля у Classic, Time
 // и Group совпадает до класса, и правка в одном месте не должна расходиться
@@ -26,12 +28,36 @@ $failAccent: #ff7c72;
 // Подложка под сеткой 16x8. Без неё фон просвечивает в снятых клетках, и поле
 // перестаёт читаться как единый объект.
 @mixin board-plate {
-	background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), $plate);
-	border: 2px solid rgba(255, 255, 255, 0.56);
-	border-radius: 20px;
+	// Рамка поля из набора v2. У ассета preserveAspectRatio="none", поэтому он
+	// честно тянется под реальный размер поля — в отличие от hud-panel.svg,
+	// который приходилось заменять CSS-эквивалентом.
+	//
+	// Подложка под рамкой спокойнее плиток: детали фона не должны спорить с
+	// фруктами, а плитки теперь цветные и сами держат внимание.
+	background: url('@/assets/redesign-v2/ui/board-frame.svg') center / 100% 100%
+			no-repeat,
+		rgba(8, 126, 145, 0.26);
+	border-radius: 24px;
 	padding: 7px;
-	box-shadow: 0 12px 28px rgba(4, 71, 91, 0.3), inset 0 1px 0 #fff;
 	backdrop-filter: blur(5px);
+}
+
+// Капсула HUD. Панель-переросток заменена отдельными капсулами: на телефоне
+// одна длинная плашка сливалась в полосу, из которой ничего не вычитывается.
+@mixin hud-capsule {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 44px;
+	padding: 0 14px;
+	box-sizing: border-box;
+	flex-shrink: 0;
+	color: $navy;
+	letter-spacing: 1px;
+	white-space: nowrap;
+	background: url('@/assets/redesign-v2/ui/hud-pill.svg') center / 100% 100%
+		no-repeat;
 }
 
 // Трёхслойная плитка: подложка, фрукт, состояние.
@@ -43,27 +69,36 @@ $failAccent: #ff7c72;
 // Подложку вешаем на модификатор --filled: пустые клетки сетки используют тот
 // же элемент, и без модификатора плитка нарисовалась бы и под ними.
 @mixin tile-layers {
+	// Плитка больше не белая карточка-картинка. Цвет клетки берётся по
+	// стабильному правилу type % 4 из утверждённой палитры: одинаковые фрукты
+	// всегда одного цвета, и поле читается как цветная сетка, а не как ряды
+	// одинаковых белых квадратов.
+	//
+	// Слоёв четыре, а мест три (фон, :before, :after), поэтому градиент и
+	// глянец кладём двумя фонами одного элемента: глянец сверху, цвет снизу.
 	&--filled {
-		background-image: url('@/assets/redesign/ui/tile-base.svg');
+		background-image: url('@/assets/redesign-v2/ui/tile-gloss.svg'), none;
+		background-size: 100% 100%, 100% 100%;
+		background-position: center, center;
+		background-repeat: no-repeat, no-repeat;
+		border-radius: 24%;
+		box-shadow: 0 2px 3px rgba(7, 94, 114, 0.32);
 
-		// Подложку растягиваем сверх клетки. В ассете плитка нарисована как
-		// rect x=5 width=90 при viewBox 100, то есть по 5% пустого поля с каждой
-		// стороны под тень: при нынешнем размере клетки это читалось как лишний
-		// зазор между соседями. 106% возвращают плитке ~95% клетки; больше
-		// брать нельзя — начнёт обрезаться бирюзовый кант.
-		background-size: 106% 106%;
-		background-position: center;
-
-		// Крупный фрукт и бирюзовая рамка сразу отделяют набор от старых PNG.
 		&:before {
 			content: '';
 			position: absolute;
 			inset: 0;
 			background-image: var(--fruit, none);
-			background-size: 93% 93%;
+			background-size: 90% 90%;
 			background-position: center;
 			background-repeat: no-repeat;
 			transition: background-size 0.16s ease-out;
+		}
+	}
+
+	@each $name, $grad in $tileColors {
+		&--#{$name} {
+			background-image: url('@/assets/redesign-v2/ui/tile-gloss.svg'), $grad;
 		}
 	}
 }
@@ -93,6 +128,10 @@ $failAccent: #ff7c72;
 
 	&--active {
 		z-index: 10;
+		// Подъём отдельным свойством translate: transform занят раскладкой
+		// сетки и GSAP, а translate применяется поверх него, не затирая.
+		translate: 0 -2px;
+		filter: drop-shadow(0 4px 6px rgba(7, 94, 114, 0.34));
 
 		&:after {
 			opacity: 1;
@@ -183,15 +222,15 @@ $failAccent: #ff7c72;
 
 @keyframes tile-seeded {
 	0% {
-		background-size: 46% 46%;
+		background-size: 50% 50%;
 		opacity: 0;
 	}
 	60% {
-		background-size: 92% 92%;
+		background-size: 98% 98%;
 		opacity: 1;
 	}
 	100% {
-		background-size: 84% 84%;
+		background-size: 90% 90%;
 		opacity: 1;
 	}
 }
@@ -226,10 +265,10 @@ $failAccent: #ff7c72;
 
 @keyframes tile-shuffle {
 	0% {
-		background-size: 77% 77%;
+		background-size: 83% 83%;
 	}
 	100% {
-		background-size: 84% 84%;
+		background-size: 90% 90%;
 	}
 }
 

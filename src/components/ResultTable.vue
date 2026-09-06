@@ -55,6 +55,7 @@ const $emits = defineEmits(['close'])
 	background: rgba(23, 61, 105, 0.72);
 	backdrop-filter: blur(6px);
 	color: #fff;
+	animation: result-backdrop 160ms ease-out both;
 
 	display: flex;
 	flex-direction: column;
@@ -78,6 +79,7 @@ const $emits = defineEmits(['close'])
 		border: 3px solid rgba(255, 255, 255, 0.4);
 		border-radius: 18px;
 		font-size: clamp(18px, 4vw, 22px);
+		animation: result-card 220ms ease-out both;
 	}
 
 	&__title {
@@ -117,6 +119,34 @@ const $emits = defineEmits(['close'])
 		background-image: url('@/assets/redesign/icons/home.svg');
 		touch-action: manipulation;
 		-webkit-tap-highlight-color: transparent;
+	}
+}
+
+@keyframes result-backdrop {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes result-card {
+	0% {
+		opacity: 0;
+		transform: scale(0.9);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+// Спецификация: без scale и сдвигов, только затухание.
+@media (prefers-reduced-motion: reduce) {
+	.result,
+	.result__in {
+		animation: result-backdrop 140ms linear both;
 	}
 }
 </style>

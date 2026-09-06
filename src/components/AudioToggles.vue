@@ -41,6 +41,8 @@ const { toggleMusic, toggleAudio, playAudio, musicActive, audioActive } =
 </template>
 
 <style lang="scss" scoped>
+@import '@/assets/_redesign.scss';
+
 .audio-toggles {
 	display: flex;
 	align-items: center;
@@ -48,6 +50,7 @@ const { toggleMusic, toggleAudio, playAudio, musicActive, audioActive } =
 	flex-shrink: 0;
 
 	&__btn {
+		position: relative;
 		flex-shrink: 0;
 		padding: 0;
 		border: none;
@@ -55,30 +58,51 @@ const { toggleMusic, toggleAudio, playAudio, musicActive, audioActive } =
 		cursor: pointer;
 		border-radius: 50%;
 		background-color: transparent;
-		background-size: 100%;
-		background-position: center;
-		background-repeat: no-repeat;
 		opacity: 0.4;
 		transition: opacity 0.3s linear;
 		touch-action: manipulation;
 		-webkit-tap-highlight-color: transparent;
+
+		// Иконки набора одноцветные и белые. На светлой капсуле HUD они бы
+		// пропали, поэтому рисуем их маской и красим через currentColor: один
+		// и тот же файл работает и на тёмном кружке меню, и на светлом HUD.
+		color: $navy;
+
+		&:before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background-color: currentColor;
+			mask-image: var(--icon);
+			mask-size: 100%;
+			mask-position: center;
+			mask-repeat: no-repeat;
+			-webkit-mask-image: var(--icon);
+			-webkit-mask-size: 100%;
+			-webkit-mask-position: center;
+			-webkit-mask-repeat: no-repeat;
+		}
 
 		&.active {
 			opacity: 1;
 		}
 
 		&.filled {
+			color: #fff;
 			border: 2px solid rgba(255, 255, 255, 0.72);
 			background-color: rgba(23, 61, 105, 0.72);
-			background-size: 62%;
+
+			&:before {
+				inset: 19%;
+			}
 		}
 
 		&--music {
-			background-image: url('@/assets/redesign/icons/music.svg');
+			--icon: url('@/assets/redesign/icons/music.svg');
 		}
 
 		&--sound {
-			background-image: url('@/assets/redesign/icons/sound.svg');
+			--icon: url('@/assets/redesign/icons/sound.svg');
 		}
 	}
 }
