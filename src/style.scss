@@ -1,4 +1,5 @@
 @import '@/assets/_common.scss';
+@import '@/assets/_redesign.scss';
 
 @font-face {
 	font-family: LuckiestGuy;
@@ -16,13 +17,8 @@ html {
 body {
 	margin: 0;
 	overflow: hidden;
-	background: $bgGrad;
-	background-color: $bgColor;
-	background-attachment: fixed;
+	background-color: $sceneEdge;
 	font-family: LuckiestGuy, sans-serif;
-	background-image: url('@/assets/img/bg.png');
-	background-repeat: repeat;
-	background-position: center;
 	width: 100dvw;
 	height: 100dvh;
 	position: fixed;

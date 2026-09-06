@@ -45,7 +45,7 @@ const $emits = defineEmits(['close'])
 	right: 0;
 	bottom: 0;
 	z-index: 1000;
-	background-color: $bgColor;
+	background-color: $sceneEdge;
 
 	@include screen-bg(url('@/assets/redesign/backgrounds/menu-tropical.webp'));
 
