@@ -9,7 +9,7 @@
 // экране, поэтому шов был незаметен. С новыми фонами старый узор стал чужим.
 $sceneEdge: #8adfe2;
 
-$plate: rgba(54, 55, 105, 0.16);
+$plate: rgba(10, 78, 104, 0.3);
 $selectAccent: #30e6b0;
 $groupAccent: #ffc94d;
 $failAccent: #ff7c72;
@@ -26,10 +26,12 @@ $failAccent: #ff7c72;
 // Подложка под сеткой 16x8. Без неё фон просвечивает в снятых клетках, и поле
 // перестаёт читаться как единый объект.
 @mixin board-plate {
-	background-color: $plate;
-	border-radius: 14px;
-	padding: 4px;
-	backdrop-filter: blur(3px);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), $plate);
+	border: 2px solid rgba(255, 255, 255, 0.56);
+	border-radius: 20px;
+	padding: 7px;
+	box-shadow: 0 12px 28px rgba(4, 71, 91, 0.3), inset 0 1px 0 #fff;
+	backdrop-filter: blur(5px);
 }
 
 // Трёхслойная плитка: подложка, фрукт, состояние.
@@ -44,13 +46,13 @@ $failAccent: #ff7c72;
 	&--filled {
 		background-image: url('@/assets/redesign/ui/tile-base.svg');
 
-		// Размер фрукта внутри клетки из README: 82–86%.
+		// Крупный фрукт и новая бирюзовая рамка сразу отделяют набор от старых PNG.
 		&:before {
 			content: '';
 			position: absolute;
 			inset: 0;
 			background-image: var(--fruit, none);
-			background-size: 84% 84%;
+			background-size: 93% 93%;
 			background-position: center;
 			background-repeat: no-repeat;
 			transition: background-size 0.16s ease-out;

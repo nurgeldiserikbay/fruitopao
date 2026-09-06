@@ -411,7 +411,7 @@ function clearTimers() {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	padding: 15px 15px 85px;
+	padding: 12px 15px 68px;
 
 	&__level {
 		flex-shrink: 0;
@@ -438,13 +438,14 @@ function clearTimers() {
 		justify-content: space-between;
 		align-items: center;
 		gap: 22px;
-		width: 100%;
+		width: min(100%, 650px);
+		margin-inline: auto;
 		min-height: 52px;
 		box-sizing: border-box;
 		// Отступ рассчитан на скругление панели (radius 30 в hud-panel.svg):
 		// при меньшем крайние иконки визуально подрезаются углом.
 		padding: 0 26px;
-		margin-bottom: 10px;
+		margin-bottom: 8px;
 		color: #fff;
 
 		// CSS-эквивалент hud-panel.svg вместо самого файла: у ассета фиксированные
@@ -536,13 +537,14 @@ function clearTimers() {
 
 .tiles {
 	position: relative;
-	width: 100%;
+	width: min(100%, 580px);
 	aspect-ratio: 2;
-	max-width: 100%;
+	max-width: 580px;
+	margin-inline: auto;
 	box-sizing: border-box;
 	@include board-plate;
 
-	transform: translateY(-35px);
+	transform: translateY(-15px);
 
 	.tile {
 		position: absolute;
@@ -553,7 +555,7 @@ function clearTimers() {
 		justify-content: center;
 		align-items: center;
 		cursor: pointer;
-		padding: 5px;
+		padding: 2px;
 		transition: transform 0.2s linear, opacity 0.2s linear;
 		background-size: 100% 100%;
 		background-repeat: no-repeat;
