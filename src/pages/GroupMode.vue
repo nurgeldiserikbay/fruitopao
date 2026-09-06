@@ -324,9 +324,12 @@ function clearTimers() {
 
 <template>
 	<div class="page">
-		<div class="page__head">
+		<div class="page__rail page__rail--left">
 			<BackLink />
-			<AudioToggles />
+			<AudioToggles :size="40" chip vertical />
+		</div>
+
+		<div class="page__head">
 			<div class="page__level">LEVEL {{ level + 1 }}</div>
 			<TimerItem
 				class="time"
@@ -457,6 +460,32 @@ function clearTimers() {
 
 	// Общая стеклянная плашка из набора. Панель тёмно-синяя, поэтому весь
 	// текст и иконки в шапке светлые: чёрный на ней не читался.
+
+	// Боковые рельсы. Поле 580 в сцене 720, значит по краям всегда свободно
+	// по 70 px — сцена фиксированная, так что место есть при любых пропорциях
+	// устройства. Туда уносим всё нажимаемое: сверху остаются только
+	// показатели, а кнопки оказываются под большими пальцами.
+	&__rail {
+		position: absolute;
+		top: 68px;
+		bottom: 58px;
+		width: 62px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-start;
+		gap: 10px;
+		z-index: 300;
+
+		&--left {
+			left: 4px;
+		}
+
+		&--right {
+			right: 4px;
+		}
+	}
+
 	// Шапка — не панель, а ряд отдельных капсул: одна длинная плашка на
 	// телефоне сливалась в полосу, из которой ничего не вычитывается.
 	&__head {

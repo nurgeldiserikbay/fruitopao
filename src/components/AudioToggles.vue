@@ -8,9 +8,13 @@ withDefaults(
 	defineProps<{
 		filled?: boolean
 		size?: number
+		vertical?: boolean
+		chip?: boolean
 	}>(),
 	{
 		filled: false,
+		vertical: false,
+		chip: false,
 		size: 34,
 	}
 )
@@ -20,9 +24,9 @@ const { toggleMusic, toggleAudio, playAudio, musicActive, audioActive } =
 </script>
 
 <template>
-	<div class="audio-toggles">
+	<div :class="{ 'audio-toggles--vertical': vertical }" class="audio-toggles">
 		<button
-			:class="{ active: musicActive, filled }"
+			:class="{ active: musicActive, filled, chip }"
 			:style="{ width: `${size}px`, height: `${size}px` }"
 			class="audio-toggles__btn audio-toggles__btn--music"
 			type="button"
@@ -30,7 +34,7 @@ const { toggleMusic, toggleAudio, playAudio, musicActive, audioActive } =
 			@click="toggleMusic(), playAudio('click')"
 		></button>
 		<button
-			:class="{ active: audioActive, filled }"
+			:class="{ active: audioActive, filled, chip }"
 			:style="{ width: `${size}px`, height: `${size}px` }"
 			class="audio-toggles__btn audio-toggles__btn--sound"
 			type="button"
@@ -48,6 +52,11 @@ const { toggleMusic, toggleAudio, playAudio, musicActive, audioActive } =
 	align-items: center;
 	gap: 8px;
 	flex-shrink: 0;
+
+	// В боковой рельсе кнопки стоят столбиком.
+	&--vertical {
+		flex-direction: column;
+	}
 
 	&__btn {
 		position: relative;
@@ -87,6 +96,18 @@ const { toggleMusic, toggleAudio, playAudio, musicActive, audioActive } =
 
 		&.active {
 			opacity: 1;
+		}
+
+		// В боковой рельсе тумблеры стоят рядом с кнопкой «назад», и голая
+		// иконка на фоне выглядела недоделанной: даём им такую же светлую
+		// капсулу, как у остальных элементов интерфейса.
+		&.chip {
+			background-color: rgba(255, 255, 255, 0.82);
+			box-shadow: 0 3px 0 rgba(7, 94, 114, 0.18);
+
+			&:before {
+				inset: 22%;
+			}
 		}
 
 		&.filled {
