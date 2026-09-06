@@ -49,7 +49,9 @@ $failAccent: #ff7c72;
 	align-items: center;
 	justify-content: center;
 	gap: 6px;
-	height: 44px;
+	// 38 вместо 44: из пяти капсул нажимаются только две. Информационным
+	// высота кнопки не нужна, а из-за неё шапка выглядела тяжёлой.
+	height: 38px;
 	padding: 0 14px;
 	box-sizing: border-box;
 	flex-shrink: 0;

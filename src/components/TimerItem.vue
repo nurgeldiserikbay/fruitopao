@@ -115,14 +115,17 @@ function handleVisibilityChange() {
 	width: 80%;
 	font-size: 14px;
 	box-sizing: border-box;
-	height: 18px;
+	// Полоса времени ничего не принимает на нажатие, это чистая индикация,
+	// поэтому ей не нужна высота кнопки: толстый блок просто перетягивал на
+	// себя внимание в шапке.
+	height: 10px;
 
 	// Часы — обычный элемент строки, а не абсолютный: рядом стоит номер
 	// уровня, и вынос за границу полосы наезжал на подпись.
 	// Иконка одноцветная и белая: на светлой капсуле красим её маской.
 	&__icon {
-		width: 20px;
-		height: 20px;
+		width: 17px;
+		height: 17px;
 		flex-shrink: 0;
 		background-color: #123d66;
 		mask: url('@/assets/redesign/icons/clock.svg') center / contain no-repeat;
@@ -132,16 +135,17 @@ function handleVisibilityChange() {
 
 	&__track {
 		flex: 1 1 auto;
-		height: 100%;
-		border-radius: 5px;
-		border: 1px solid rgba(255, 255, 255, 0.7);
-		background: rgba(54, 55, 105, 0.16);
+		// Высота задаётся явно, а не в 100%: снаружи .time — капсула HUD со
+		// своей высотой, и полоса растягивалась на неё целиком.
+		height: 10px;
+		border-radius: 999px;
+		background: rgba(18, 61, 102, 0.16);
 		overflow: hidden;
 	}
 
 	&__in {
 		position: relative;
-		border-radius: 5px;
+		border-radius: 999px;
 		height: 100%;
 		background: linear-gradient(90deg, #2fbf7a, #8fd94a);
 		transition: background 0.3s linear;

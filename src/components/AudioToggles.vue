@@ -11,7 +11,7 @@ withDefaults(
 	}>(),
 	{
 		filled: false,
-		size: 26,
+		size: 34,
 	}
 )
 
@@ -68,10 +68,12 @@ const { toggleMusic, toggleAudio, playAudio, musicActive, audioActive } =
 		// и тот же файл работает и на тёмном кружке меню, и на светлом HUD.
 		color: $navy;
 
+		// Зона нажатия крупнее самой иконки: 26px по стандартам касания мало,
+		// а раздувать саму иконку в шапке незачем.
 		&:before {
 			content: '';
 			position: absolute;
-			inset: 0;
+			inset: 18%;
 			background-color: currentColor;
 			mask-image: var(--icon);
 			mask-size: 100%;
