@@ -104,8 +104,6 @@ function handleVisibilityChange() {
 	align-items: stretch;
 	gap: 15px;
 
-	@include screen-bg(url('@/assets/redesign/backgrounds/menu-tropical.webp'));
-
 	&__head {
 		display: flex;
 		justify-content: flex-start;

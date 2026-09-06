@@ -413,8 +413,6 @@ function clearTimers() {
 	align-items: stretch;
 	padding: 15px 15px 85px;
 
-	@include screen-bg(url('@/assets/redesign/backgrounds/game-calm.webp'));
-
 	&__level {
 		flex-shrink: 0;
 		font-size: 18px;

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 
 import { usePageStore } from '@/store/pageStore'
 import { useScoreStore } from '@/store/scoreStore'
@@ -10,6 +10,9 @@ const scoreStore = useScoreStore()
 // Рекорд берём по текущему режиму: карточка итога живёт внутри страницы
 // режима, так что currentPage — это и есть режим сыгранной партии.
 const best = computed(() => scoreStore.bestOf(pageStore.currentPage))
+
+onMounted(() => pageStore.setResultOpen(true))
+onBeforeUnmount(() => pageStore.setResultOpen(false))
 
 withDefaults(
 	defineProps<{
@@ -45,19 +48,13 @@ const $emits = defineEmits(['close'])
 	right: 0;
 	bottom: 0;
 	z-index: 1000;
-	background-color: $sceneEdge;
-
-	@include screen-bg(url('@/assets/redesign/backgrounds/menu-tropical.webp'));
-
-	// Затемняющий слой из спецификации: карточка результата должна читаться
-	// поверх насыщенного фона.
-	&:before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background: rgba(28, 54, 91, 0.16);
-		pointer-events: none;
-	}
+	// Своей картинки у экрана итога больше нет: фон рисует общий слой на весь
+	// вьюпорт, а этот блок лежит внутри сцены и накрыл бы только её — на краях
+	// был бы виден шов между двумя кадрированиями одной и той же картинки.
+	// Вместо этого — вуаль в цвете панели HUD, она же прячет поле под собой.
+	background: rgba(23, 61, 105, 0.72);
+	backdrop-filter: blur(6px);
+	color: #fff;
 
 	display: flex;
 	flex-direction: column;
@@ -77,8 +74,8 @@ const $emits = defineEmits(['close'])
 		align-items: center;
 		overflow: hidden;
 		margin-bottom: clamp(50px, 10vh, 100px);
-		background: rgba(255, 255, 255, 0.3);
-		backdrop-filter: blur(3px);
+		background: rgba(255, 255, 255, 0.18);
+		border: 3px solid rgba(255, 255, 255, 0.4);
 		border-radius: 18px;
 		font-size: clamp(18px, 4vw, 22px);
 	}
