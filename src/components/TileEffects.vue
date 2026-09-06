@@ -37,11 +37,17 @@ function cellStyle(effect: ITileEffect) {
 			/>
 		</template>
 
-		<span
-			v-else-if="effect.kind === 'dissolve'"
-			:style="{ backgroundImage: `url('/img/fruits/${effect.type}.png')` }"
-			class="fx__dissolve"
-		/>
+		<!-- Пара сошлась: плитка кратко вспыхивает галочкой, фрукт на ней
+		сжимается и гаснет. Обе фишки убирают из сетки сразу, поэтому состояние
+		показывает копия в слое эффектов. -->
+		<span v-else-if="effect.kind === 'dissolve'" class="fx__match">
+			<span
+				:style="{
+					backgroundImage: `url('/img/fruits-redesign/${effect.type}.webp')`,
+				}"
+				class="fx__match-fruit"
+			/>
+		</span>
 
 		<!-- В двух верхних рядах подъём уводит плашку под шапку, поэтому там
 		очки всплывают вниз. -->
@@ -72,13 +78,21 @@ function cellStyle(effect: ITileEffect) {
 		animation: fx-spark 340ms ease-out var(--delay) both;
 	}
 
-	&__dissolve {
+	&__match {
 		position: absolute;
 		inset: 0;
-		background-size: 100% 100%;
-		background-repeat: no-repeat;
-		background-position: center;
-		animation: fx-dissolve 300ms ease-in both;
+		background: url('@/assets/redesign/ui/tile-match.svg') center / 100% 100%
+			no-repeat;
+		animation: fx-match 300ms ease-out both;
+
+		&-fruit {
+			position: absolute;
+			inset: 0;
+			background-size: 84% 84%;
+			background-position: center;
+			background-repeat: no-repeat;
+			animation: fx-dissolve 300ms ease-in both;
+		}
 	}
 
 	// Подложку рисуем стилями, а не plus-score.svg: в ассете уже нарисованы
@@ -118,6 +132,21 @@ function cellStyle(effect: ITileEffect) {
 	100% {
 		transform: translate(var(--dx), var(--dy)) scale(1);
 		opacity: 0;
+	}
+}
+
+@keyframes fx-match {
+	0% {
+		opacity: 0;
+		transform: scale(0.9);
+	}
+	25% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	100% {
+		opacity: 0;
+		transform: scale(1.04);
 	}
 }
 
@@ -169,7 +198,8 @@ function cellStyle(effect: ITileEffect) {
 			animation: fx-fade 100ms linear both;
 		}
 
-		&__dissolve {
+		&__match,
+		&__match-fruit {
 			animation: fx-fade-out 100ms linear both;
 		}
 

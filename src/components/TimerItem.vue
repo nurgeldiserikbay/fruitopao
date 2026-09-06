@@ -94,27 +94,49 @@ function handleVisibilityChange() {
 
 <template>
 	<div class="time">
-		<div
-			class="time__in"
-			:class="{ 'time__in--low': isLow }"
-			:style="{
-				width: getWidth,
-			}"
-		></div>
+		<img
+			class="time__icon"
+			src="@/assets/redesign/icons/clock.svg?url"
+			alt=""
+		/>
+		<div class="time__track">
+			<div
+				class="time__in"
+				:class="{ 'time__in--low': isLow }"
+				:style="{
+					width: getWidth,
+				}"
+			></div>
+		</div>
 	</div>
 </template>
 
 <style lang="scss" scoped>
 .time {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 	width: 80%;
 	font-size: 14px;
 	box-sizing: border-box;
-	height: 20px;
-	text-align: center;
-	border-radius: 5px;
-	border: 1px solid rgba(255, 255, 255, 0.7);
-	background: rgba(54, 55, 105, 0.16);
-	overflow: hidden;
+	height: 22px;
+
+	// Часы — обычный элемент строки, а не абсолютный: рядом стоит номер
+	// уровня, и вынос за границу полосы наезжал на подпись.
+	&__icon {
+		width: 20px;
+		height: 20px;
+		flex-shrink: 0;
+	}
+
+	&__track {
+		flex: 1 1 auto;
+		height: 100%;
+		border-radius: 5px;
+		border: 1px solid rgba(255, 255, 255, 0.7);
+		background: rgba(54, 55, 105, 0.16);
+		overflow: hidden;
+	}
 
 	&__in {
 		position: relative;

@@ -117,7 +117,7 @@ const $emits = defineEmits(['close'])
 		cursor: pointer;
 		background-size: cover;
 		background-color: transparent;
-		background-image: url('@/assets/img/home.png');
+		background-image: url('@/assets/redesign/icons/home.svg');
 		touch-action: manipulation;
 		-webkit-tap-highlight-color: transparent;
 	}

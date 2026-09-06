@@ -9,6 +9,10 @@ import { useAudio } from '@/composables/useAudio'
 
 import { PAGES } from '@/utils/conts'
 
+import classicIcon from '@/assets/redesign/icons/classic.svg?url'
+import clockIcon from '@/assets/redesign/icons/clock.svg?url'
+import groupIcon from '@/assets/redesign/icons/group.svg?url'
+
 const {
 	play,
 	stop,
@@ -61,13 +65,22 @@ function handleVisibilityChange() {
 			</div>
 
 			<div class="start-page__btns">
-				<UiButton @click="pageStore.routeTo(PAGES.CLASSIC), playAudio('click')">
+				<UiButton
+					:icon="classicIcon"
+					@click="pageStore.routeTo(PAGES.CLASSIC), playAudio('click')"
+				>
 					Classic
 				</UiButton>
-				<UiButton @click="pageStore.routeTo(PAGES.TIME), playAudio('click')">
+				<UiButton
+					:icon="clockIcon"
+					@click="pageStore.routeTo(PAGES.TIME), playAudio('click')"
+				>
 					Time
 				</UiButton>
-				<UiButton @click="pageStore.routeTo(PAGES.GROUP), playAudio('click')">
+				<UiButton
+					:icon="groupIcon"
+					@click="pageStore.routeTo(PAGES.GROUP), playAudio('click')"
+				>
 					Group
 				</UiButton>
 			</div>
@@ -101,14 +114,19 @@ function handleVisibilityChange() {
 		button {
 			width: 40px;
 			height: 40px;
-			border-radius: 8px;
-			border: none;
+			border-radius: 50%;
+			border: 2px solid rgba(255, 255, 255, 0.72);
 			outline: none;
 			cursor: pointer;
-			opacity: 0.5;
+			opacity: 0.45;
 			transition: 0.3s linear;
-			background-size: cover;
-			background-color: transparent;
+			background-size: 62%;
+			background-position: center;
+			background-repeat: no-repeat;
+
+			// Иконки набора белые: без тёмной подложки они пропадают на
+			// светлом тропическом фоне.
+			background-color: rgba(23, 61, 105, 0.72);
 
 			&.active {
 				opacity: 1;
@@ -117,11 +135,11 @@ function handleVisibilityChange() {
 	}
 
 	&__music {
-		background-image: url('@/assets/img/music.png');
+		background-image: url('@/assets/redesign/icons/music.svg');
 	}
 
 	&__sound {
-		background-image: url('@/assets/img/sound.png');
+		background-image: url('@/assets/redesign/icons/sound.svg');
 	}
 
 	&__logo {

@@ -13,7 +13,7 @@ function back() {
 
 <template>
 	<button class="back-link" @click="back">
-		<img src="@/assets/img/back.png" alt="exit" />
+		<img src="@/assets/redesign/icons/back.svg?url" alt="exit" />
 	</button>
 </template>
 

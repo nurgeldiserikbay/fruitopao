@@ -32,6 +32,32 @@ $failAccent: #ff7c72;
 	backdrop-filter: blur(3px);
 }
 
+// Трёхслойная плитка: подложка, фрукт, состояние.
+//
+// В старом наборе фрукт и сиреневая плитка были запечены в один PNG, поэтому
+// масштабировать или гасить фрукт отдельно было нельзя. Теперь подложка —
+// фон самой фишки, прозрачный фрукт — на :before, состояние — на :after.
+//
+// Подложку вешаем на модификатор --filled: пустые клетки сетки используют тот
+// же элемент, и без модификатора плитка нарисовалась бы и под ними.
+@mixin tile-layers {
+	&--filled {
+		background-image: url('@/assets/redesign/ui/tile-base.svg');
+
+		// Размер фрукта внутри клетки из README: 82–86%.
+		&:before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background-image: var(--fruit, none);
+			background-size: 84% 84%;
+			background-position: center;
+			background-repeat: no-repeat;
+			transition: background-size 0.16s ease-out;
+		}
+	}
+}
+
 // Рамка выделения.
 //
 // Рисуем на :after фишки, а не масштабируем саму фишку, как просит
@@ -96,10 +122,15 @@ $failAccent: #ff7c72;
 @mixin tile-fail {
 	&--fail {
 		z-index: 9;
-		outline: 3px solid $failAccent;
-		outline-offset: -4px;
-		border-radius: 12px;
 		animation: tile-fail 0.18s linear;
+
+		// Готовое состояние ошибки из набора: плитка кратко перекрывает фрукт
+		// красным крестом. Держится 180 мс, поэтому фрукт не теряется.
+		&:after {
+			opacity: 1;
+			transform: none;
+			background-image: url('@/assets/redesign/ui/tile-error.svg');
+		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {
@@ -129,12 +160,12 @@ $failAccent: #ff7c72;
 // домножило бы позицию в сетке, разбросав фишки. Растим сам фрукт через
 // background-size — визуально то же «выросло из клетки», позиции не касается.
 @mixin tile-seeded {
-	&--seeded {
+	&--seeded:before {
 		animation: tile-seeded 0.24s ease-out;
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		&--seeded {
+		&--seeded:before {
 			animation: tile-seeded-fade 0.1s linear;
 		}
 	}
@@ -142,15 +173,15 @@ $failAccent: #ff7c72;
 
 @keyframes tile-seeded {
 	0% {
-		background-size: 55% 55%;
+		background-size: 46% 46%;
 		opacity: 0;
 	}
 	60% {
-		background-size: 110% 110%;
+		background-size: 92% 92%;
 		opacity: 1;
 	}
 	100% {
-		background-size: 100% 100%;
+		background-size: 84% 84%;
 		opacity: 1;
 	}
 }
@@ -172,12 +203,12 @@ $failAccent: #ff7c72;
 // сознательно: состояние поля к началу анимации уже финальное, волна чисто
 // косметическая, а лишняя блокировка — это лишний способ подвесить доску.
 @mixin tile-shuffle {
-	&--shuffling {
+	&--shuffling:before {
 		animation: tile-shuffle 0.3s ease-out calc(var(--row, 0) * 18ms) both;
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		&--shuffling {
+		&--shuffling:before {
 			animation: none;
 		}
 	}
@@ -185,10 +216,10 @@ $failAccent: #ff7c72;
 
 @keyframes tile-shuffle {
 	0% {
-		background-size: 92% 92%;
+		background-size: 77% 77%;
 	}
 	100% {
-		background-size: 100% 100%;
+		background-size: 84% 84%;
 	}
 }
 

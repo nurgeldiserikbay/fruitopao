@@ -73,7 +73,9 @@ const getStyle = computed(() => (row: number, col: number, tile?: ITile) => {
 		transform: `translate(${col * 100}%, ${row * 100}%)`,
 		transformOrigin: 'center',
 		'--row': row,
-		backgroundImage: tile ? `url('/img/fruits/${tile.type}.png')` : '',
+		// Фрукт уходит в отдельный слой (:before), поэтому это переменная,
+		// а не фон самой фишки: фоном теперь служит подложка плитки.
+		'--fruit': tile ? `url('/img/fruits-redesign/${tile.type}.webp')` : 'none',
 	}
 })
 
@@ -459,7 +461,7 @@ function clearTimers() {
 				</div>
 
 				<div class="page__score">
-					<img src="@/assets/img/star.png" alt="" />
+					<img src="@/assets/redesign/icons/star.svg?url" alt="" />
 					<span>{{ score }}</span>
 				</div>
 			</div>
@@ -483,7 +485,7 @@ function clearTimers() {
 						}"
 						:row="row"
 						:col="col"
-						class="tile"
+						class="tile tile--filled"
 						@click="clickTile({ row, col })"
 					></div>
 					<div
@@ -535,8 +537,8 @@ function clearTimers() {
 	&__level {
 		flex-shrink: 0;
 		font-size: 18px;
-
-		@include hud-pill;
+		letter-spacing: 2px;
+		white-space: nowrap;
 	}
 
 	// Кольцо отсчёта до подсева. Убывающий сектор режем маской: сам ассет
@@ -580,34 +582,44 @@ function clearTimers() {
 		min-width: 0;
 	}
 
+	// Общая стеклянная плашка из набора. Панель тёмно-синяя, поэтому весь
+	// текст и иконки в шапке светлые: чёрный на ней не читался.
 	&__head {
 		position: relative;
 		z-index: 300;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: 15px;
+		gap: 22px;
 		width: 100%;
+		min-height: 52px;
 		box-sizing: border-box;
-		padding: 0 10px;
+		// Отступ рассчитан на скругление панели (radius 30 в hud-panel.svg):
+		// при меньшем крайние иконки визуально подрезаются углом.
+		padding: 0 26px;
 		margin-bottom: 10px;
+		color: #fff;
+
+		// CSS-эквивалент hud-panel.svg вместо самого файла: у ассета фиксированные
+		// пропорции 720x76, а SVG в background-size: 100% 100% не растягивается —
+		// preserveAspectRatio по умолчанию вписывает его с полями, и панель
+		// рисовалась заметно уже шапки, обрезая крайние иконки.
+		background: rgba(23, 61, 105, 0.72);
+		border: 4px solid rgba(255, 255, 255, 0.72);
+		border-radius: 30px;
+		backdrop-filter: blur(3px);
 	}
 
 	&__info {
-		width: 30%;
-		padding: 2px 5px 2px 15px;
 		box-sizing: border-box;
 		flex-shrink: 0;
 		display: flex;
-		justify-content: flex-start;
+		justify-content: flex-end;
 		align-items: center;
 		gap: 15px;
-		color: #000;
+		color: #fff;
 		font-size: 22px;
 		letter-spacing: 2px;
-		background: rgba(255, 255, 255, 0.3);
-		backdrop-filter: blur(3px);
-		border-radius: 5px;
 	}
 
 	&__reload {
@@ -624,7 +636,7 @@ function clearTimers() {
 			transition: 0.3s linear;
 			background-size: cover;
 			background-color: transparent;
-			background-image: url('@/assets/img/reload.png');
+			background-image: url('@/assets/redesign/icons/shuffle.svg');
 		}
 	}
 
@@ -674,6 +686,7 @@ function clearTimers() {
 		background-repeat: no-repeat;
 
 		@include tile-overlay(url('@/assets/redesign/overlays/tile-selected.svg'));
+		@include tile-layers;
 		@include tile-fail;
 		@include tile-shuffle;
 		@include tile-seeded;
