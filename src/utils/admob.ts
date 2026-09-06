@@ -43,6 +43,13 @@ const INTERSTITIAL_WATCHDOG_MS = 25_000
 class Admob {
 	// Флаг однократной подписки на события баннера (защита от накопления слушателей).
 	private bannerListenersAdded = false
+	private bannerLoadedHandlers: (() => void)[] = []
+
+	// Подписка на загрузку баннера для интерфейса. Реклама об интерфейсе
+	// ничего не знает и знать не должна — только отдаёт факт наружу.
+	onBannerLoaded(handler: () => void) {
+		this.bannerLoadedHandlers.push(handler)
+	}
 	// Хендлы слушателей интерстишла — снимаем перед повторной подпиской.
 	private interstitialListenerHandles: PluginListenerHandle[] = []
 	// Время последнего показанного интерстишла для частотного капа.
@@ -84,7 +91,11 @@ class Admob {
 			this.bannerListenersAdded = true
 
 			AdMob.addListener(BannerAdPluginEvents.Loaded, () => {
-				// Subscribe Banner Event Listener
+				// Единственное, что здесь появилось, — уведомление наружу.
+				// Настройки запроса, размер, позиция и порядок вызовов не
+				// меняются: по нему интерфейс убирает собственную промо-полосу,
+				// чтобы две рекламы не оказались друг на друге.
+				this.bannerLoadedHandlers.forEach((handler) => handler())
 			})
 
 			AdMob.addListener(

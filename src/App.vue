@@ -11,13 +11,21 @@ import Admob from '@/utils/admob'
 import { usePageStore } from '@/store/pageStore'
 
 import SceneWrapper from '@/components/SceneWrapper.vue'
+import HouseAd from '@/components/HouseAd.vue'
 
 import { PAGES } from '@/utils/conts'
 
 import menuBg from '@/assets/redesign/backgrounds/menu-tropical.webp'
 import gameBg from '@/assets/redesign/backgrounds/game-calm.webp'
 
+import { useAdsStore } from '@/store/adsStore'
+
 const pageStore = usePageStore()
+const adsStore = useAdsStore()
+
+// Промо своих игр показываем только в режимах: на главном меню баннера нет,
+// значит и подменять там нечего.
+const showHouseAd = computed(() => pageStore.currentPage !== PAGES.START)
 
 // Фон живёт вне SceneWrapper. Сцена жёстко 720x405 и вписывается в экран с
 // полями, поэтому фон внутри неё накрывал только саму сцену, а по краям
@@ -32,6 +40,7 @@ const bgImage = computed(() => {
 onMounted(async () => {
 	if (Capacitor.getPlatform() === 'android') {
 		void Admob.initialize().catch(() => {})
+		Admob.onBannerLoaded(() => adsStore.bannerInit())
 	}
 
 	if (Capacitor.getPlatform() === 'android') {
@@ -53,6 +62,8 @@ onMounted(async () => {
 	<SceneWrapper>
 		<component :is="pageStore.currentPageComponent" />
 	</SceneWrapper>
+
+	<HouseAd v-if="showHouseAd" />
 </template>
 
 <style lang="scss" scoped>
