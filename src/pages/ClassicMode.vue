@@ -5,6 +5,7 @@ import gsap from 'gsap'
 
 import UiButton from '@/components/UiButton.vue'
 import BackLink from '@/components/BackLink.vue'
+import AudioToggles from '@/components/AudioToggles.vue'
 import TimerItem from '@/components/TimerItem.vue'
 import ResultTable from '@/components/ResultTable.vue'
 import TileEffects from '@/components/TileEffects.vue'
@@ -331,6 +332,7 @@ function clearTimers() {
 	<div class="page">
 		<div class="page__head">
 			<BackLink />
+			<AudioToggles />
 			<div class="page__level">LEVEL {{ level + 1 }}</div>
 			<TimerItem
 				class="time"
@@ -440,7 +442,7 @@ function clearTimers() {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: 22px;
+		gap: 14px;
 		width: 100%;
 		min-height: 52px;
 		box-sizing: border-box;

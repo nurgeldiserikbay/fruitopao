@@ -4,6 +4,7 @@ import { onBeforeUnmount, onMounted } from 'vue'
 import { usePageStore } from '@/store/pageStore'
 
 import UiButton from '@/components/UiButton.vue'
+import AudioToggles from '@/components/AudioToggles.vue'
 
 import { useAudio } from '@/composables/useAudio'
 
@@ -13,15 +14,7 @@ import classicIcon from '@/assets/redesign/icons/classic.svg?url'
 import clockIcon from '@/assets/redesign/icons/clock.svg?url'
 import groupIcon from '@/assets/redesign/icons/group.svg?url'
 
-const {
-	play,
-	stop,
-	toggleMusic,
-	toggleAudio,
-	playAudio,
-	musicActive,
-	audioActive,
-} = useAudio()
+const { play, stop, playAudio } = useAudio()
 
 const pageStore = usePageStore()
 
@@ -47,16 +40,7 @@ function handleVisibilityChange() {
 <template>
 	<div class="page start-page">
 		<div class="start-page__head">
-			<button
-				:class="{ active: musicActive }"
-				class="start-page__music"
-				@click="toggleMusic(), playAudio('click')"
-			></button>
-			<button
-				:class="{ active: audioActive }"
-				class="start-page__sound"
-				@click="toggleAudio(), playAudio('click')"
-			></button>
+			<AudioToggles :size="40" filled />
 		</div>
 
 		<div class="start-page__body">
@@ -107,37 +91,6 @@ function handleVisibilityChange() {
 	&__head {
 		display: flex;
 		justify-content: flex-start;
-		gap: 10px;
-
-		button {
-			width: 40px;
-			height: 40px;
-			border-radius: 50%;
-			border: 2px solid rgba(255, 255, 255, 0.72);
-			outline: none;
-			cursor: pointer;
-			opacity: 0.45;
-			transition: 0.3s linear;
-			background-size: 62%;
-			background-position: center;
-			background-repeat: no-repeat;
-
-			// Иконки набора белые: без тёмной подложки они пропадают на
-			// светлом тропическом фоне.
-			background-color: rgba(23, 61, 105, 0.72);
-
-			&.active {
-				opacity: 1;
-			}
-		}
-	}
-
-	&__music {
-		background-image: url('@/assets/redesign/icons/music.svg');
-	}
-
-	&__sound {
-		background-image: url('@/assets/redesign/icons/sound.svg');
 	}
 
 	&__logo {
