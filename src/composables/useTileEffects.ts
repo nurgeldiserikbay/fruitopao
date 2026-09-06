@@ -13,16 +13,18 @@ export interface ISparkPart {
 
 export interface ITileEffect {
 	id: number
-	kind: 'sparkle' | 'score'
+	kind: 'sparkle' | 'score' | 'dissolve'
 	row: number
 	col: number
 	value?: number
+	type?: number
 	parts?: ISparkPart[]
 }
 
 // Держим синхронно с длительностями в _redesign.scss.
 const SPARKLE_MS = 460
 const SCORE_MS = 520
+const DISSOLVE_MS = 320
 
 export function useTileEffects() {
 	const effects = ref<ITileEffect[]>([])
@@ -64,6 +66,13 @@ export function useTileEffects() {
 		push({ kind: 'score', row, col, value }, SCORE_MS)
 	}
 
+	// Призрак снятой фишки. Саму фишку из сетки убирают сразу, поэтому
+	// сжиматься и гаснуть должна копия в слое эффектов — иначе пришлось бы
+	// откладывать изменение состояния поля ради анимации.
+	function dissolve(row: number, col: number, type: number) {
+		push({ kind: 'dissolve', row, col, type }, DISSOLVE_MS)
+	}
+
 	function clear() {
 		timers.forEach((timer) => clearTimeout(timer))
 		timers.clear()
@@ -72,5 +81,5 @@ export function useTileEffects() {
 
 	onBeforeUnmount(clear)
 
-	return { effects, sparkle, score, clear }
+	return { effects, sparkle, score, dissolve, clear }
 }

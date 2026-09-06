@@ -8,6 +8,7 @@ import BackLink from '@/components/BackLink.vue'
 import TimerItem from '@/components/TimerItem.vue'
 import ResultTable from '@/components/ResultTable.vue'
 import TileEffects from '@/components/TileEffects.vue'
+import WinSparkles from '@/components/WinSparkles.vue'
 
 import { usePageStore } from '@/store/pageStore'
 import { useScoreStore } from '@/store/scoreStore'
@@ -30,7 +31,7 @@ import {
 const pageStore = usePageStore()
 const scoreStore = useScoreStore()
 const audioCont = useAudio()
-const { effects, sparkle, score: popScore } = useTileEffects()
+const { effects, sparkle, score: popScore, dissolve } = useTileEffects()
 
 const cols = 16
 const rows = 8
@@ -51,6 +52,7 @@ const tiles = shallowRef<TYPE_GRID>([])
 const selectedPoint = ref<ICoord>()
 const secondPoint = ref<ICoord>()
 const failPoint = ref<ICoord>()
+const isShuffling = ref(false)
 const selectedTile = computed(() => {
 	return (
 		selectedPoint.value &&
@@ -64,6 +66,7 @@ const getStyle = computed(() => (row: number, col: number, tile?: ITile) => {
 		height: `${height}%`,
 		transform: `translate(${col * 100}%, ${row * 100}%)`,
 		transformOrigin: 'center',
+		'--row': row,
 		backgroundImage: tile ? `url('/img/fruits/${tile.type}.png')` : '',
 	}
 })
@@ -130,6 +133,21 @@ function hardShuffle() {
 	const tilesGrid = shuffleTable(tiles.value)
 	shuffleCount.value = shuffleCount.value - 1
 	runShuffle(tilesGrid, true)
+	playShuffleWave()
+}
+
+// Перезапуск анимации: класс надо снять и вернуть в следующем кадре, иначе
+// повторное перемешивание подряд не проигрывается.
+function playShuffleWave() {
+	isShuffling.value = false
+	requestAnimationFrame(() => {
+		isShuffling.value = true
+	})
+	clearTimeout(timers['5'])
+	timers['5'] = setTimeout(() => {
+		isShuffling.value = false
+		delete timers['5']
+	}, 460)
 }
 
 function runShuffle(tilesGrid: TYPE_GRID, hard: boolean = false) {
@@ -140,6 +158,7 @@ function runShuffle(tilesGrid: TYPE_GRID, hard: boolean = false) {
 		tilesGrid = shuffleTable(tilesGrid)
 		if (!suffled) suffled = true
 	}
+	if (suffled) playShuffleWave()
 	if (suffled && !hard) shuffleCount.value = shuffleCount.value - 1
 	if (isNotMove) {
 		endRun()
@@ -154,6 +173,13 @@ function clearTiles() {
 	audioCont.playAudio('remove')
 	sparkle(secondPoint.value.row, secondPoint.value.col)
 	popScore(secondPoint.value.row, secondPoint.value.col, 20)
+
+	// Тип читаем до обнуления: призраку нужна картинка снятой фишки.
+	;[selectedPoint.value, secondPoint.value].forEach((point) => {
+		const tile = tiles.value[point.row][point.col]
+		if (tile) dissolve(point.row, point.col, tile.type)
+	})
+
 	tiles.value[selectedPoint.value.row][selectedPoint.value.col] = null
 	tiles.value[secondPoint.value.row][secondPoint.value.col] = null
 	score.value += 20
@@ -334,6 +360,7 @@ function clearTimers() {
 						:class="{
 							'tile--active': tile?.key === selectedTile?.key,
 							'tile--fail': failPoint?.row === row && failPoint?.col === col,
+							'tile--shuffling': isShuffling,
 						}"
 						:row="row"
 						:col="col"
@@ -356,6 +383,8 @@ function clearTimers() {
 				:cell-height="height"
 			/>
 		</div>
+
+		<WinSparkles v-if="isEnd && isWin" />
 
 		<UiButton
 			v-if="isEnd && isWin"
@@ -495,6 +524,7 @@ function clearTimers() {
 
 		@include tile-overlay(url('@/assets/redesign/overlays/tile-selected.svg'));
 		@include tile-fail;
+		@include tile-shuffle;
 	}
 }
 </style>

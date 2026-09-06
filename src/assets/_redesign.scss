@@ -163,3 +163,58 @@ $failAccent: #ff7c72;
 		opacity: 1;
 	}
 }
+
+// Волна при перемешивании: ряды оживают по очереди, шаг 18 мс из
+// спецификации. Масштаб снова через background-size — transform у фишки занят
+// раскладкой сетки. Номер ряда приходит инлайновой переменной --row.
+//
+// Повторный тап во время волны спецификация просит блокировать; не блокируем
+// сознательно: состояние поля к началу анимации уже финальное, волна чисто
+// косметическая, а лишняя блокировка — это лишний способ подвесить доску.
+@mixin tile-shuffle {
+	&--shuffling {
+		animation: tile-shuffle 0.3s ease-out calc(var(--row, 0) * 18ms) both;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&--shuffling {
+			animation: none;
+		}
+	}
+}
+
+@keyframes tile-shuffle {
+	0% {
+		background-size: 92% 92%;
+	}
+	100% {
+		background-size: 100% 100%;
+	}
+}
+
+// Каскадный сброс набранных рамок в Group при тапе по чужому фрукту.
+// Порядковый номер в наборе приходит переменной --leave.
+@mixin tile-leaving {
+	&--leaving:after {
+		opacity: 1;
+		animation: tile-leaving 0.22s ease-in calc(var(--leave, 0) * 40ms) both;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&--leaving:after {
+			animation: none;
+			opacity: 0;
+		}
+	}
+}
+
+@keyframes tile-leaving {
+	0% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	100% {
+		opacity: 0;
+		transform: scale(0.8);
+	}
+}

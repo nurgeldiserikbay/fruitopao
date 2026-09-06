@@ -14,6 +14,7 @@ import BackLink from '@/components/BackLink.vue'
 import TimerItem from '@/components/TimerItem.vue'
 import ResultTable from '@/components/ResultTable.vue'
 import TileEffects from '@/components/TileEffects.vue'
+import WinSparkles from '@/components/WinSparkles.vue'
 
 import { usePageStore } from '@/store/pageStore'
 import { useScoreStore } from '@/store/scoreStore'
@@ -30,7 +31,7 @@ import { generateBoard, modifyTable, randomInt } from './game'
 const pageStore = usePageStore()
 const scoreStore = useScoreStore()
 const audioCont = useAudio()
-const { effects, sparkle, score: popScore } = useTileEffects()
+const { effects, sparkle, score: popScore, dissolve } = useTileEffects()
 
 const cols = 16
 const rows = 8
@@ -51,6 +52,15 @@ const selectedTileType = ref<number | null>(null)
 const selectedPoints = ref<ICoord[]>([])
 const failPoint = ref<ICoord>()
 const targetBeat = ref(false)
+const targetShake = ref(false)
+const leavingPoints = ref<ICoord[]>([])
+
+// Порядковый номер фишки в уходящем наборе задаёт задержку каскада.
+const leaveIndex = computed(() => (row: number, col: number) => {
+	return leavingPoints.value.findIndex(
+		(point) => point.row === row && point.col === col
+	)
+})
 const selectedTileCount = computed(() => {
 	return tiles.value.reduce((total, row) => {
 		total += row.reduce((t2, col) => {
@@ -78,6 +88,7 @@ const getStyle = computed(() => (row: number, col: number, tile?: ITile) => {
 		height: `${height}%`,
 		transform: `translate(${col * 100}%, ${row * 100}%)`,
 		transformOrigin: 'center',
+		'--row': row,
 		backgroundImage: tile ? `url('/img/fruits/${tile.type}.png')` : '',
 	}
 })
@@ -168,7 +179,12 @@ function clearTiles() {
 	// Искры на каждой снятой фишке, но всплывающие очки — одни, суммой:
 	// шесть отдельных «+20» друг на друге не читаются.
 	const last = selectedPoints.value[selectedPoints.value.length - 1]
-	selectedPoints.value.forEach((tile) => sparkle(tile.row, tile.col))
+	selectedPoints.value.forEach((tile) => {
+		sparkle(tile.row, tile.col)
+		// Тип читаем до обнуления: призраку нужна картинка снятой фишки.
+		const cur = tiles.value[tile.row][tile.col]
+		if (cur) dissolve(tile.row, tile.col, cur.type)
+	})
 	popScore(last.row, last.col, selectedPoints.value.length * 20)
 
 	const emptyPoint: TYPE_PATH = []
@@ -226,7 +242,7 @@ function clickTile(coord: ICoord) {
 	if (selectedTile.type !== selectedTileType.value) {
 		audioCont.playAudio('fail')
 		markFail(coord)
-		selectedPoints.value = []
+		releaseSelected()
 		return
 	}
 	audioCont.playAudio('select')
@@ -253,6 +269,23 @@ function markFail(point: ICoord) {
 		failPoint.value = undefined
 		delete timers['3']
 	}, 200)
+}
+
+// Тап по чужому фрукту: набранные рамки уходят каскадом, а не пропадают
+// разом, и цель в шапке дёргается — иначе непонятно, что сбросился весь набор.
+function releaseSelected() {
+	leavingPoints.value = [...selectedPoints.value]
+	selectedPoints.value = []
+	targetShake.value = false
+	requestAnimationFrame(() => {
+		targetShake.value = true
+	})
+	clearTimeout(timers['5'])
+	timers['5'] = setTimeout(() => {
+		leavingPoints.value = []
+		targetShake.value = false
+		delete timers['5']
+	}, 420)
 }
 
 // Цель в шапке коротко отзывается на каждый верный тап: иначе не видно, что
@@ -288,7 +321,13 @@ function clearTimers() {
 				@timeend="timeend"
 			/>
 			<div class="page__info">
-				<div :class="{ 'page__target--beat': targetBeat }" class="page__target">
+				<div
+					:class="{
+						'page__target--beat': targetBeat,
+						'page__target--shake': targetShake,
+					}"
+					class="page__target"
+				>
 					<div class="page__tile">
 						<img
 							v-if="selectedTileType !== null"
@@ -316,10 +355,12 @@ function clearTimers() {
 						:id="`${row}-${col}`"
 						:style="{
 							...getStyle(row, col, tile),
+							'--leave': Math.max(0, leaveIndex(row, col)),
 						}"
 						:class="{
 							'tile--active': isSelected(row, col),
 							'tile--fail': failPoint?.row === row && failPoint?.col === col,
+							'tile--leaving': leaveIndex(row, col) >= 0,
 						}"
 						:row="row"
 						:col="col"
@@ -342,6 +383,8 @@ function clearTimers() {
 				:cell-height="height"
 			/>
 		</div>
+
+		<WinSparkles v-if="isEnd && isWin" />
 
 		<UiButton
 			v-if="isEnd && isWin"
@@ -427,6 +470,10 @@ function clearTimers() {
 			animation: target-beat 0.19s ease-out;
 		}
 
+		&--shake {
+			animation: target-shake 0.22s linear;
+		}
+
 		&-count {
 			font-size: 16px;
 			letter-spacing: 1px;
@@ -503,6 +550,20 @@ function clearTimers() {
 
 		@include tile-overlay(url('@/assets/redesign/overlays/tile-group-selected.svg'));
 		@include tile-fail;
+		@include tile-leaving;
+	}
+}
+
+@keyframes target-shake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(-3px);
+	}
+	75% {
+		transform: translateX(3px);
 	}
 }
 
@@ -517,7 +578,8 @@ function clearTimers() {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.page__target--beat {
+	.page__target--beat,
+	.page__target--shake {
 		animation: none;
 	}
 }

@@ -37,6 +37,12 @@ function cellStyle(effect: ITileEffect) {
 			/>
 		</template>
 
+		<span
+			v-else-if="effect.kind === 'dissolve'"
+			:style="{ backgroundImage: `url('/img/fruits/${effect.type}.png')` }"
+			class="fx__dissolve"
+		/>
+
 		<!-- В двух верхних рядах подъём уводит плашку под шапку, поэтому там
 		очки всплывают вниз. -->
 		<span
@@ -64,6 +70,15 @@ function cellStyle(effect: ITileEffect) {
 		background: url('@/assets/redesign/effects/sparkle.svg') center / contain
 			no-repeat;
 		animation: fx-spark 340ms ease-out var(--delay) both;
+	}
+
+	&__dissolve {
+		position: absolute;
+		inset: 0;
+		background-size: 100% 100%;
+		background-repeat: no-repeat;
+		background-position: center;
+		animation: fx-dissolve 300ms ease-in both;
 	}
 
 	// Подложку рисуем стилями, а не plus-score.svg: в ассете уже нарисованы
@@ -106,6 +121,17 @@ function cellStyle(effect: ITileEffect) {
 	}
 }
 
+@keyframes fx-dissolve {
+	0% {
+		transform: scale(1);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(0.65);
+		opacity: 0;
+	}
+}
+
 @keyframes fx-score {
 	0% {
 		transform: translate(-50%, 0) scale(0.8);
@@ -143,10 +169,23 @@ function cellStyle(effect: ITileEffect) {
 			animation: fx-fade 100ms linear both;
 		}
 
+		&__dissolve {
+			animation: fx-fade-out 100ms linear both;
+		}
+
 		&__score {
 			transform: translateX(-50%);
 			animation: fx-fade 400ms linear both;
 		}
+	}
+}
+
+@keyframes fx-fade-out {
+	0% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
 	}
 }
 
