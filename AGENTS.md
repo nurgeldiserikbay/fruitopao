@@ -5,7 +5,7 @@ Vue 3 + Vite + Pinia + GSAP, обёрнута в Capacitor 8 под Android, ж�
 как `com.thelightcome.fruitopao`.
 
 Полное описание механики, режимов и экранов: [`_gpt-brief/04-FruitoPao-описание.md`](_gpt-brief/04-FruitoPao-описание.md),
-там же скриншоты всех экранов в `_gpt-brief/shots/`.
+актуальные кадры экранов — в `_gpt-brief/shots-current/`.
 
 Над репозиторием работают два агента: **Codex** (через GitHub) и **Claude Code**
 (локально у владельца). Ниже — правила, чтобы не мешать друг другу и не сломать релиз.
