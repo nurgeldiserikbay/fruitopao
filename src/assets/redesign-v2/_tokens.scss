@@ -1,0 +1,17 @@
+// Утверждённые токены Fruito Pao 2.0. Claude должен использовать их вместо
+// произвольных цветов, чтобы меню, HUD и плитки оставались одной системой.
+$navy: #123d66;
+$aqua: #22cbd1;
+$aquaDeep: #087e91;
+$mint: #8de8c4;
+$coral: #ff8790;
+$lemon: #ffe27a;
+$sky: #8eddf4;
+$white: #ffffff;
+
+$tileColors: (
+	aqua: linear-gradient(145deg, #e8ffff 0%, #8eddf4 100%),
+	mint: linear-gradient(145deg, #f1fff7 0%, #8de8c4 100%),
+	coral: linear-gradient(145deg, #fff2f1 0%, #ffabb0 100%),
+	lemon: linear-gradient(145deg, #fffbea 0%, #ffe27a 100%),
+);
