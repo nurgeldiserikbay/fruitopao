@@ -1,0 +1,83 @@
+// Визуальное обновление по спецификации _gpt-brief/redesign/README.md.
+//
+// Миксины лежат здесь, а не копиями в страницах: разметка поля у Classic, Time
+// и Group совпадает до класса, и правка в одном месте не должна расходиться
+// по трём файлам.
+
+$plate: rgba(54, 55, 105, 0.16);
+$selectAccent: #30e6b0;
+$groupAccent: #ffc94d;
+
+// Фон экрана. Перекрывает повторяющийся паттерн из body: сцена 720x405 — это
+// 16:9, фоны сделаны под то же соотношение, поэтому cover не режет края.
+@mixin screen-bg($image) {
+	background-image: $image;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+// Подложка под сеткой 16x8. Без неё фон просвечивает в снятых клетках, и поле
+// перестаёт читаться как единый объект.
+@mixin board-plate {
+	background-color: $plate;
+	border-radius: 14px;
+	padding: 4px;
+	backdrop-filter: blur(3px);
+}
+
+// Рамка выделения.
+//
+// Рисуем на :after фишки, а не масштабируем саму фишку, как просит
+// спецификация. Её transform занят: инлайновый стиль раскладывает сетку через
+// translate, а GSAP пишет туда же во время анимации маршрута — селектор с
+// scale() либо проиграет инлайну, либо подерётся с анимацией. Рамка с выносом
+// за края даёт тот же эффект «фишка поднялась над соседями» и переживает
+// анимацию маршрута.
+@mixin tile-overlay($image) {
+	&:after {
+		content: '';
+		position: absolute;
+		inset: -6%;
+		z-index: 1;
+		pointer-events: none;
+		background-image: $image;
+		background-size: 100% 100%;
+		background-repeat: no-repeat;
+		opacity: 0;
+		transform: scale(0.94);
+		transition: opacity 0.12s linear, transform 0.16s ease-out;
+	}
+
+	&--active {
+		z-index: 10;
+
+		&:after {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	// Оставляем только смену прозрачности: масштаб и подъём убираем.
+	@media (prefers-reduced-motion: reduce) {
+		&:after {
+			transform: none;
+			transition: opacity 0.1s linear;
+		}
+
+		&--active:after {
+			transform: none;
+		}
+	}
+}
+
+// Плашка в HUD: номер уровня, счёт, счётчик группы — все на одном фоне.
+@mixin hud-pill {
+	padding: 2px 12px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.3);
+	backdrop-filter: blur(3px);
+	color: #000;
+	letter-spacing: 2px;
+	white-space: nowrap;
+}

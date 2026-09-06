@@ -83,11 +83,15 @@ function handleVisibilityChange() {
 </template>
 
 <style lang="scss" scoped>
+@import '@/assets/_redesign.scss';
+
 .start-page {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
 	gap: 15px;
+
+	@include screen-bg(url('@/assets/redesign/backgrounds/menu-tropical.webp'));
 
 	&__head {
 		display: flex;

@@ -271,6 +271,7 @@ function clearTimers() {
 	<div class="page">
 		<div class="page__head">
 			<BackLink />
+			<div class="page__level">LEVEL {{ level + 1 }}</div>
 			<TimerItem
 				class="time"
 				:is-win="isWin"
@@ -337,11 +338,31 @@ function clearTimers() {
 </template>
 
 <style lang="scss" scoped>
+@import '@/assets/_redesign.scss';
+
 .page {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
 	padding: 15px 15px 85px;
+
+	@include screen-bg(url('@/assets/redesign/backgrounds/game-calm.webp'));
+
+	&__level {
+		flex-shrink: 0;
+		font-size: 18px;
+
+		@include hud-pill;
+	}
+
+	// Таймер стоит между фиксированными плашками, поэтому забирает остаток
+	// строки сам: собственная ширина 80% из TimerItem рядом с номером уровня
+	// переполняла шапку.
+	.time {
+		flex: 1 1 auto;
+		width: auto;
+		min-width: 0;
+	}
 
 	&__head {
 		position: relative;
@@ -418,8 +439,8 @@ function clearTimers() {
 	aspect-ratio: 2;
 	max-width: 100%;
 	box-sizing: border-box;
-	background-color: rgba(255, 255, 255, 0.1);
-	backdrop-filter: blur(3px);
+	@include board-plate;
+
 	transform: translateY(-35px);
 
 	.tile {
@@ -436,27 +457,7 @@ function clearTimers() {
 		background-size: 100% 100%;
 		background-repeat: no-repeat;
 
-		&:after {
-			content: '';
-			position: absolute;
-			top: 0;
-			left: 0;
-			bottom: 0;
-			right: 0;
-			z-index: 1;
-			background: #bff75f75;
-			opacity: 0;
-			transition: 0.2s linear;
-		}
-
-		&--active {
-			z-index: 10;
-			opacity: 0.8;
-
-			&:after {
-				opacity: 1;
-			}
-		}
+		@include tile-overlay(url('@/assets/redesign/overlays/tile-selected.svg'));
 	}
 }
 </style>

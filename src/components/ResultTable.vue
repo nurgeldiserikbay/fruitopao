@@ -23,6 +23,7 @@ const $emits = defineEmits(['close'])
 
 <style lang="scss" scoped>
 @import '@/assets/_common.scss';
+@import '@/assets/_redesign.scss';
 
 .result {
 	position: absolute;
@@ -31,10 +32,20 @@ const $emits = defineEmits(['close'])
 	right: 0;
 	bottom: 0;
 	z-index: 1000;
-	background: $bgColor;
-	background: $bgGrad;
-	background-image: url('@/assets/img/bg.png');
-	background-repeat: repeat;
+	background-color: $bgColor;
+
+	@include screen-bg(url('@/assets/redesign/backgrounds/menu-tropical.webp'));
+
+	// Затемняющий слой из спецификации: карточка результата должна читаться
+	// поверх насыщенного фона.
+	&:before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: rgba(28, 54, 91, 0.16);
+		pointer-events: none;
+	}
+
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
