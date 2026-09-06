@@ -12,7 +12,7 @@ function cellStyle(effect: ITileEffect) {
 	return {
 		width: `${$props.cellWidth}%`,
 		height: `${$props.cellHeight}%`,
-		transform: `translate(${effect.col * 100}%, ${effect.row * 100}%)`,
+		transform: `translate(${(effect.col - 1) * 100}%, ${(effect.row - 1) * 100}%)`,
 	}
 }
 </script>
