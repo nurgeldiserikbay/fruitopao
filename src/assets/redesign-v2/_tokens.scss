@@ -9,9 +9,13 @@ $lemon: #ffe27a;
 $sky: #8eddf4;
 $white: #ffffff;
 
+// Ключи в кавычках намеренно. 'aqua' и 'coral' — ключевые слова цвета в CSS,
+// и без кавычек Sass считает их цветами: интерполяция такого ключа в имя
+// класса опирается на то, как Sass решит сериализовать цвет, и об этом он
+// прямо предупреждает. Нам нужны строки для имён классов, а не цвета.
 $tileColors: (
-	aqua: linear-gradient(145deg, #e8ffff 0%, #8eddf4 100%),
-	mint: linear-gradient(145deg, #f1fff7 0%, #8de8c4 100%),
-	coral: linear-gradient(145deg, #fff2f1 0%, #ffabb0 100%),
-	lemon: linear-gradient(145deg, #fffbea 0%, #ffe27a 100%),
+	'aqua': linear-gradient(145deg, #e8ffff 0%, #8eddf4 100%),
+	'mint': linear-gradient(145deg, #f1fff7 0%, #8de8c4 100%),
+	'coral': linear-gradient(145deg, #fff2f1 0%, #ffabb0 100%),
+	'lemon': linear-gradient(145deg, #fffbea 0%, #ffe27a 100%),
 );

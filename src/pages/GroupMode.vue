@@ -457,7 +457,7 @@ function clearTimers() {
 </template>
 
 <style lang="scss" scoped>
-@import '@/assets/_redesign.scss';
+@use '@/assets/_redesign.scss' as *;
 
 .page {
 	display: flex;

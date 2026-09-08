@@ -1,5 +1,5 @@
-@import '@/assets/_common.scss';
-@import '@/assets/_redesign.scss';
+@use '@/assets/_common.scss' as *;
+@use '@/assets/_redesign.scss' as *;
 
 @font-face {
 	font-family: LuckiestGuy;

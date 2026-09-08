@@ -38,8 +38,8 @@ const $emits = defineEmits(['close'])
 </template>
 
 <style lang="scss" scoped>
-@import '@/assets/_common.scss';
-@import '@/assets/_redesign.scss';
+@use '@/assets/_common.scss' as *;
+@use '@/assets/_redesign.scss' as *;
 
 .result {
 	position: absolute;

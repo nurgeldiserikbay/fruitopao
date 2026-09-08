@@ -112,7 +112,7 @@ function answer(value: number) {
 </template>
 
 <style lang="scss" scoped>
-@import '@/assets/_redesign.scss';
+@use '@/assets/_redesign.scss' as *;
 
 .house-ad {
 	// Координаты в единицах сцены: поле кончается на y=347, полоса занимает

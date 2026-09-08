@@ -1,4 +1,9 @@
-@import './redesign-v2/tokens';
+// @use вместо @import: правило @import объявлено устаревшим и будет убрано в
+// Dart Sass 3. @forward нужен рядом, потому что @use не переэкспортирует
+// members дальше — без него компоненты, подключающие этот файл, не увидели бы
+// токены палитры.
+@use './redesign-v2/tokens' as *;
+@forward './redesign-v2/tokens';
 
 // Визуальное обновление по спецификации _gpt-brief/design-v2/README.md.
 //

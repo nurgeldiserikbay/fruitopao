@@ -10,6 +10,17 @@ export default defineConfig({
 		outDir: './docs',
 	},
 	plugins: [vue(), svgLoader()],
+	css: {
+		preprocessorOptions: {
+			scss: {
+				// Vite по умолчанию зовёт Sass через старый JS API, и тот пишет
+				// в сборку DEPRECATION WARNING [legacy-js-api]. Предупреждение
+				// не про наш код, лечится переключением на современный
+				// компилятор — вывод CSS при этом не меняется.
+				api: 'modern-compiler',
+			},
+		},
+	},
 	resolve: {
 		alias: [
 			{

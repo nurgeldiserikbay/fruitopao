@@ -45,7 +45,7 @@ const { toggleMusic, toggleAudio, playAudio, musicActive, audioActive } =
 </template>
 
 <style lang="scss" scoped>
-@import '@/assets/_redesign.scss';
+@use '@/assets/_redesign.scss' as *;
 
 .audio-toggles {
 	display: flex;

@@ -61,7 +61,7 @@ function cellStyle(effect: ITileEffect) {
 </template>
 
 <style lang="scss" scoped>
-@import '@/assets/_redesign.scss';
+@use '@/assets/_redesign.scss' as *;
 
 .fx {
 	position: absolute;
