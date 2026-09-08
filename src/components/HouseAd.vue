@@ -115,12 +115,14 @@ function answer(value: number) {
 @import '@/assets/_redesign.scss';
 
 .house-ad {
-	position: fixed;
+	// Координаты в единицах сцены: поле кончается на y=347, полоса занимает
+	// 361–393, значит остаётся 14 px просвета до доски и 12 снизу.
+	position: absolute;
 	left: 0;
 	right: 0;
-	bottom: 0;
+	bottom: 12px;
 	z-index: 400;
-	height: 52px;
+	height: 32px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -130,10 +132,10 @@ function answer(value: number) {
 		pointer-events: auto;
 		display: flex;
 		align-items: center;
-		gap: 10px;
-		max-width: 420px;
-		height: 44px;
-		padding: 0 6px 0 6px;
+		gap: 7px;
+		max-width: 300px;
+		height: 32px;
+		padding: 0 4px;
 		border: 2px solid rgba(255, 255, 255, 0.8);
 		border-radius: 999px;
 		background: rgba(255, 255, 255, 0.86);
@@ -145,9 +147,10 @@ function answer(value: number) {
 	}
 
 	&__icon {
-		width: 34px;
-		height: 34px;
-		border-radius: 9px;
+		width: 24px;
+		height: 24px;
+		border-radius: 7px;
+		border: 1px solid rgba(18, 61, 102, 0.14);
 		display: block;
 		flex-shrink: 0;
 	}
@@ -161,13 +164,13 @@ function answer(value: number) {
 	}
 
 	&__label {
-		font-size: 10px;
+		font-size: 8px;
 		letter-spacing: 1px;
 		color: rgba(18, 61, 102, 0.62);
 	}
 
 	&__title {
-		font-size: 15px;
+		font-size: 12px;
 		letter-spacing: 1px;
 		color: $navy;
 		white-space: nowrap;
@@ -175,9 +178,9 @@ function answer(value: number) {
 
 	&__cta {
 		flex-shrink: 0;
-		padding: 5px 14px;
+		padding: 4px 10px;
 		border-radius: 999px;
-		font-size: 14px;
+		font-size: 11px;
 		letter-spacing: 1px;
 		color: #fff;
 		background: linear-gradient(180deg, #63e2e7, #17b3bd);

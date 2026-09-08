@@ -44,10 +44,20 @@ onMounted(async () => {
 	}
 
 	if (Capacitor.getPlatform() === 'android') {
-		await Fullscreen.activateImmersiveMode()
-		await StatusBar.hide()
-		await StatusBar.setOverlaysWebView({ overlay: true })
-		await SplashScreen.hide()
+		// Каждый вызов в своём try/catch, а не общей цепочкой await.
+		//
+		// Раньше это была цепочка без обработки ошибок, и падение первого же
+		// вызова уносило с собой три следующих. Цена конкретная:
+		// @boengli/capacitor-fullscreen стоит версии 0.0.19 при Capacitor 8 —
+		// если activateImmersiveMode отваливается, то immersive-режим не
+		// включается и системная панель навигации остаётся на экране (в
+		// ландшафте она сбоку и на светлой теме белая), а заодно не
+		// выполняются StatusBar.hide и SplashScreen.hide — то есть заставка
+		// висит вечно.
+		await Fullscreen.activateImmersiveMode().catch(() => {})
+		await StatusBar.hide().catch(() => {})
+		await StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {})
+		await SplashScreen.hide().catch(() => {})
 
 		App.addListener('backButton', () => {
 			App.exitApp()
@@ -61,9 +71,12 @@ onMounted(async () => {
 
 	<SceneWrapper>
 		<component :is="pageStore.currentPageComponent" />
-	</SceneWrapper>
 
-	<HouseAd v-if="showHouseAd" />
+		<!-- Внутри сцены, а не поверх вьюпорта: сцена жёстко 720x405 и
+		масштабируется целиком, поэтому полоса в фиксированных пикселях на
+		телефоне не сжималась вместе со свободной зоной и налезала на поле. -->
+		<HouseAd v-if="showHouseAd" />
+	</SceneWrapper>
 </template>
 
 <style lang="scss" scoped>
