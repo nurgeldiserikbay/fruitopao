@@ -44,6 +44,12 @@ class Admob {
 	// Флаг однократной подписки на события баннера (защита от накопления слушателей).
 	private bannerListenersAdded = false
 	private bannerLoadedHandlers: (() => void)[] = []
+	private bannerSizeHandlers: ((height: number) => void)[] = []
+
+	// Подписка на реальную высоту баннера.
+	onBannerSize(handler: (height: number) => void) {
+		this.bannerSizeHandlers.push(handler)
+	}
 
 	// Подписка на загрузку баннера для интерфейса. Реклама об интерфейсе
 	// ничего не знает и знать не должна — только отдаёт факт наружу.
@@ -101,8 +107,11 @@ class Admob {
 			AdMob.addListener(
 				BannerAdPluginEvents.SizeChanged,
 				(size: AdMobBannerSize) => {
-					console.log(size)
-					// Subscribe Change Banner Size
+					// Отдаём высоту наружу. Адаптивный баннер сам решает, каким
+					// быть, и на части устройств он заметно выше зарезервированной
+					// полосы — интерфейс должен подстраиваться под факт, а не под
+					// константу. Настройки запроса это не меняет.
+					this.bannerSizeHandlers.forEach((handler) => handler(size.height))
 				}
 			)
 		}

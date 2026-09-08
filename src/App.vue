@@ -38,9 +38,21 @@ const bgImage = computed(() => {
 })
 
 onMounted(async () => {
+	// Отладочный ход: ?banner=110 подставляет высоту баннера вручную.
+	//
+	// Без этого геометрию под баннер нельзя проверить нигде, кроме реального
+	// устройства с выкупленным объявлением: в браузере события SizeChanged не
+	// будет никогда. Именно из-за отсутствия такой проверки баннер и перекрыл
+	// нижний ряд плиток — резерв стоял константой из спецификации.
+	const forced = Number(
+		new URLSearchParams(window.location.search).get('banner')
+	)
+	if (Number.isFinite(forced) && forced > 0) adsStore.setBannerHeight(forced)
+
 	if (Capacitor.getPlatform() === 'android') {
 		void Admob.initialize().catch(() => {})
 		Admob.onBannerLoaded(() => adsStore.bannerInit())
+		Admob.onBannerSize((height) => adsStore.setBannerHeight(height))
 	}
 
 	if (Capacitor.getPlatform() === 'android') {

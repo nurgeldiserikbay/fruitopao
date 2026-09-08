@@ -12,6 +12,7 @@ import TileEffects from '@/components/TileEffects.vue'
 import WinSparkles from '@/components/WinSparkles.vue'
 
 import { usePageStore } from '@/store/pageStore'
+import { useAdsStore } from '@/store/adsStore'
 import { useScoreStore } from '@/store/scoreStore'
 import { useAudio } from '@/composables/useAudio'
 import { useTileEffects } from '@/composables/useTileEffects'
@@ -29,6 +30,7 @@ import {
 import { TYPE, PAGES } from '@/utils/conts'
 
 const pageStore = usePageStore()
+const adsStore = useAdsStore()
 const scoreStore = useScoreStore()
 const audioCont = useAudio()
 const { effects, sparkle, score: popScore, dissolve } = useTileEffects()
@@ -38,6 +40,31 @@ const { effects, sparkle, score: popScore, dissolve } = useTileEffects()
 // крупнее. Пар по-прежнему целое число, остальная логика от размера не зависит.
 // Цвет плитки берётся по стабильному правилу type % 4 — так одинаковые
 // фрукты всегда одного цвета, и поле читается как цветная сетка.
+// Размер поля считаем сами, а не правилами сайзинга CSS.
+//
+// Через absolute + aspect-ratio не получается: когда заданы и left, и right,
+// ширина берётся из инсетов и лишь обрезается max-width, а высота выводится из
+// пропорции и спокойно уезжает за пределы отведённого места. При высоком
+// баннере поле переставало сжиматься и залезало под шапку.
+//
+// Handoff требует обратного: если баннер выше safe-zone — уменьшать поле
+// пропорционально, сохраняя центрирование. Арифметика это делает честно.
+const BOARD_MAX_W = 580
+const BOARD_MAX_H = 285
+const BOARD_TOP = 62
+const SCENE_H = 405
+
+const boardStyle = computed(() => {
+	const avail = SCENE_H - BOARD_TOP - adsStore.bannerScene
+	const height = Math.max(0, Math.min(BOARD_MAX_H, avail))
+	const width = Math.min(BOARD_MAX_W, (height * BOARD_MAX_W) / BOARD_MAX_H)
+	return {
+		width: `${Math.round(width)}px`,
+		height: `${Math.round(height)}px`,
+		top: `${Math.round(BOARD_TOP + (avail - height) / 2)}px`,
+	}
+})
+
 const TILE_COLORS = ['aqua', 'mint', 'coral', 'lemon']
 
 const cols = 12
@@ -490,7 +517,7 @@ function clearTimers() {
 			</div>
 		</div>
 
-		<div class="tiles">
+		<div :style="boardStyle" class="tiles">
 			<template v-for="(tileRow, row) in tiles" :key="row">
 				<template v-for="(tile, col) in tileRow" :key="col">
 					<div
@@ -554,9 +581,9 @@ function clearTimers() {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
-	// 10 сверху и 58 снизу: HUD начинается на y=10, ниже y=347 остаётся
-	// свободная полоса под нативный адаптивный баннер.
-	padding: 10px 15px 58px;
+	// Снизу резерв под баннер: --banner-h приходит из SceneWrapper и равен
+	// реальной высоте нативного баннера, переведённой в единицы сцены.
+	padding: 10px 15px var(--banner-h, 53px);
 
 	&__level {
 		font-size: 18px;
@@ -625,7 +652,7 @@ function clearTimers() {
 	&__rail {
 		position: absolute;
 		top: 68px;
-		bottom: 58px;
+		bottom: var(--banner-h, 53px);
 		width: 62px;
 		display: flex;
 		flex-direction: column;
@@ -718,12 +745,12 @@ function clearTimers() {
 }
 
 .tiles {
-	position: relative;
-	// Геометрия из handoff: поле 580x285 в зоне y 62–347, ниже 352 —
-	// safe-zone нативного баннера, туда не должен попадать игровой UI.
-	width: min(100%, 580px);
-	aspect-ratio: 580 / 285;
-	max-width: 580px;
+	// Размер и вертикальная позиция приходят инлайном из boardStyle: они
+	// зависят от реальной высоты баннера, и считать их арифметикой надёжнее,
+	// чем сайзингом CSS. Здесь остаётся только горизонтальное центрирование.
+	position: absolute;
+	left: 0;
+	right: 0;
 	margin-inline: auto;
 	box-sizing: border-box;
 	@include board-plate;
