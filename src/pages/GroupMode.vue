@@ -55,8 +55,14 @@ const BOARD_MAX_H = 285
 const BOARD_TOP = 62
 const SCENE_H = 405
 
+// Просвет между полем и баннером. Раньше резерв был равен ровно высоте
+// баннера, поэтому нижний ряд плиток упирался в объявление вплотную: пальцем
+// по нему попасть можно, но выглядит как одно целое с рекламой и провоцирует
+// случайные тапы по ней.
+const BANNER_GAP = 10
+
 const boardStyle = computed(() => {
-	const avail = SCENE_H - BOARD_TOP - adsStore.bannerScene
+	const avail = SCENE_H - BOARD_TOP - adsStore.bannerScene - BANNER_GAP
 	const height = Math.max(0, Math.min(BOARD_MAX_H, avail))
 	const width = Math.min(BOARD_MAX_W, (height * BOARD_MAX_W) / BOARD_MAX_H)
 	return {
@@ -225,7 +231,8 @@ function clearTiles() {
 		sparkle(tile.row, tile.col)
 		// Тип читаем до обнуления: призраку нужна картинка снятой фишки.
 		const cur = tiles.value[tile.row][tile.col]
-		if (cur) dissolve(tile.row, tile.col, cur.type)
+		if (cur)
+			dissolve(tile.row, tile.col, cur.type, TILE_COLORS[cur.type % 4])
 	})
 	popScore(last.row, last.col, selectedPoints.value.length * 20)
 

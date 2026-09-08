@@ -13,6 +13,15 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+
+        <!-- Фон окна активности. Без него тема AppCompat.Light отдаёт белый, и
+             в ландшафте по краям экрана видны белые полосы: WebView не
+             доходит до краёв, а под ним светится окно. Цвет совпадает с
+             кромкой сцены, поэтому шва не видно даже там, где WebView не
+             дотянулся. -->
+        <item name="android:windowBackground">@color/sceneEdge</item>
+        <item name="android:statusBarColor">@color/sceneEdge</item>
+        <item name="android:navigationBarColor">@color/sceneEdge</item>
     </style>
 
 

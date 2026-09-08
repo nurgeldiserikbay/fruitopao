@@ -37,17 +37,17 @@ function cellStyle(effect: ITileEffect) {
 			/>
 		</template>
 
-		<!-- Пара сошлась: плитка кратко вспыхивает галочкой, фрукт на ней
-		сжимается и гаснет. Обе фишки убирают из сетки сразу, поэтому состояние
-		показывает копия в слое эффектов. -->
-		<span v-else-if="effect.kind === 'dissolve'" class="fx__match">
-			<span
-				:style="{
-					backgroundImage: `url('/img/fruits-redesign/${effect.type}.webp')`,
-				}"
-				class="fx__match-fruit"
-			/>
-		</span>
+		<!-- Снятая плитка гаснет копией самой себя: тот же цвет, тот же глянец,
+		тот же фрукт. Обе фишки убирают из сетки сразу, поэтому анимировать
+		можно только копию в слое эффектов. -->
+		<span
+			v-else-if="effect.kind === 'dissolve'"
+			:class="`fx__gone--${effect.color}`"
+			:style="{
+				'--fruit': `url('/img/fruits-redesign/${effect.type}.webp')`,
+			}"
+			class="fx__gone"
+		/>
 
 		<!-- В двух верхних рядах подъём уводит плашку под шапку, поэтому там
 		очки всплывают вниз. -->
@@ -78,20 +78,33 @@ function cellStyle(effect: ITileEffect) {
 		animation: fx-spark 340ms ease-out var(--delay) both;
 	}
 
-	&__match {
+	// Копия плитки: цвет и глянец те же, что в @mixin tile-layers, поэтому
+	// исчезновение выглядит продолжением фишки, а не подменой её другим
+	// объектом.
+	&__gone {
 		position: absolute;
 		inset: 0;
-		background: url('@/assets/redesign/ui/tile-match.svg') center / 100% 100%
-			no-repeat;
-		animation: fx-match 300ms ease-out both;
+		background-size: 100% 100%, 100% 100%;
+		background-position: center, center;
+		background-repeat: no-repeat, no-repeat;
+		border-radius: 24%;
+		box-shadow: 0 2px 3px rgba(7, 94, 114, 0.32);
+		animation: fx-gone 260ms ease-in both;
 
-		&-fruit {
+		&:before {
+			content: '';
 			position: absolute;
 			inset: 0;
-			background-size: 84% 84%;
+			background-image: var(--fruit, none);
+			background-size: 90% 90%;
 			background-position: center;
 			background-repeat: no-repeat;
-			animation: fx-dissolve 300ms ease-in both;
+		}
+
+		@each $name, $grad in $tileColors {
+			&--#{$name} {
+				background-image: url('@/assets/redesign-v2/ui/tile-gloss.svg'), $grad;
+			}
 		}
 	}
 
@@ -135,24 +148,15 @@ function cellStyle(effect: ITileEffect) {
 	}
 }
 
-@keyframes fx-match {
+// Из таблицы микроанимаций handoff: верная пара — scale 1 -> 1.08 -> .65 с
+// затуханием, 220 мс.
+@keyframes fx-gone {
 	0% {
-		opacity: 0;
-		transform: scale(0.9);
-	}
-	25% {
+		transform: scale(1);
 		opacity: 1;
-		transform: scale(1);
 	}
-	100% {
-		opacity: 0;
-		transform: scale(1.04);
-	}
-}
-
-@keyframes fx-dissolve {
-	0% {
-		transform: scale(1);
+	35% {
+		transform: scale(1.08);
 		opacity: 1;
 	}
 	100% {
@@ -198,8 +202,7 @@ function cellStyle(effect: ITileEffect) {
 			animation: fx-fade 100ms linear both;
 		}
 
-		&__match,
-		&__match-fruit {
+		&__gone {
 			animation: fx-fade-out 100ms linear both;
 		}
 

@@ -18,6 +18,7 @@ export interface ITileEffect {
 	col: number
 	value?: number
 	type?: number
+	color?: string
 	parts?: ISparkPart[]
 }
 
@@ -69,8 +70,12 @@ export function useTileEffects() {
 	// Призрак снятой фишки. Саму фишку из сетки убирают сразу, поэтому
 	// сжиматься и гаснуть должна копия в слое эффектов — иначе пришлось бы
 	// откладывать изменение состояния поля ради анимации.
-	function dissolve(row: number, col: number, type: number) {
-		push({ kind: 'dissolve', row, col, type }, DISSOLVE_MS)
+	// Призраку нужен не только фрукт, но и цвет плитки: снятая клетка должна
+	// гаснуть тем же цветом, каким была. Раньше поверх ложилась мятная плашка
+	// с галочкой из старого набора — на цветных плитках это читалось как
+	// подмена фишки чем-то посторонним в момент снятия.
+	function dissolve(row: number, col: number, type: number, color: string) {
+		push({ kind: 'dissolve', row, col, type, color }, DISSOLVE_MS)
 	}
 
 	function clear() {

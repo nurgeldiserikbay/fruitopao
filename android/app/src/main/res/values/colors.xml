@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Цвет кромки сцены из src/assets/_redesign.scss ($sceneEdge). Тем же
+         цветом закрашивается окно активности: всё, что не попало под WebView
+         (вырез, область под системными панелями), должно совпадать с игрой, а
+         не светиться белым. -->
+    <color name="sceneEdge">#8ADFE2</color>
+</resources>
