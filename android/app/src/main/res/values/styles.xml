@@ -19,7 +19,7 @@
              доходит до краёв, а под ним светится окно. Цвет совпадает с
              кромкой сцены, поэтому шва не видно даже там, где WebView не
              дотянулся. -->
-        <item name="android:windowBackground">@color/sceneEdge</item>
+        <item name="android:windowBackground">@drawable/window_background</item>
         <item name="android:statusBarColor">@color/sceneEdge</item>
         <item name="android:navigationBarColor">@color/sceneEdge</item>
     </style>

@@ -342,12 +342,21 @@ function clearTiles() {
 	sparkle(secondPoint.value.row, secondPoint.value.col)
 	popScore(secondPoint.value.row, secondPoint.value.col, 20)
 
-	// Тип читаем до обнуления: призраку нужна картинка снятой фишки.
-	;[selectedPoint.value, secondPoint.value].forEach((point) => {
-		const tile = tiles.value[point.row][point.col]
-		if (tile)
-			dissolve(point.row, point.col, tile.type, TILE_COLORS[tile.type % 4])
-	})
+	// Призрак один и ровно на месте второй фишки.
+	//
+	// Первая к этому моменту уже проехала маршрут и стоит на клетке второй —
+	// они слились. Раньше призраки создавались на исходных позициях обеих, и
+	// первая копия «всплывала» на старом месте, откуда фишка давно уехала:
+	// выглядело как отскок назад перед исчезновением. Тип читаем до обнуления,
+	// иначе картинку брать уже неоткуда.
+	const gone = tiles.value[secondPoint.value.row][secondPoint.value.col]
+	if (gone)
+		dissolve(
+			secondPoint.value.row,
+			secondPoint.value.col,
+			gone.type,
+			TILE_COLORS[gone.type % 4]
+		)
 
 	tiles.value[selectedPoint.value.row][selectedPoint.value.col] = null
 	tiles.value[secondPoint.value.row][secondPoint.value.col] = null
