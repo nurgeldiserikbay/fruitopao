@@ -50,6 +50,10 @@ onMounted(async () => {
 	if (Number.isFinite(forced) && forced > 0) adsStore.setBannerHeight(forced)
 
 	if (Capacitor.getPlatform() === 'android') {
+		// Подписку ставим до initialize(): первое событие баннера может прийти
+		// раньше, чем страница успеет смонтироваться, и потеряться.
+		Admob.onBannerChange((live, height) => adsStore.setBanner(live, height))
+
 		void Admob.initialize().catch(() => {})
 		Admob.onBannerLoaded(() => adsStore.bannerInit())
 		Admob.onBannerSize((height) => adsStore.setBannerHeight(height))

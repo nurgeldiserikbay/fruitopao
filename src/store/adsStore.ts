@@ -30,6 +30,25 @@ export const useAdsStore = defineStore('adsStore', () => {
 		bannerInited.value = true
 	}
 
+	/**
+	 * Стоит ли сейчас настоящее объявление в баннерном слоте.
+	 *
+	 * Полоса под баннер здесь зарезервирована и без рекламы (bannerScene, минимум
+	 * 53 единицы сцены), поэтому кто-то должен решать, что в ней рисовать:
+	 * пришедший баннер закрывает полосу собой, а пока его нет — там кросс-промо
+	 * наших же игр. Ответ знает только нативный слой, он его сюда и публикует.
+	 *
+	 * Высота приходит тем же событием и уходит в setBannerHeight — в тот самый
+	 * пересчёт, который уже держит геометрию поля. Отдельного второго источника
+	 * высоты здесь намеренно нет: два счётчика одной величины разъезжаются.
+	 */
+	const bannerLive = ref(false)
+
+	function setBanner(live: boolean, height = 0) {
+		bannerLive.value = live
+		if (live && height > 0) setBannerHeight(height)
+	}
+
 	return {
 		loading,
 		toggleLoading,
@@ -39,5 +58,7 @@ export const useAdsStore = defineStore('adsStore', () => {
 		setBannerHeight,
 		bannerScene,
 		setBannerScene,
+		bannerLive,
+		setBanner,
 	}
 })

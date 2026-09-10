@@ -402,12 +402,29 @@ function moveTileByCoords(
 		return
 	}
 
+	// Раскладочный transform исходной клетки: к нему элемент надо вернуть после
+	// маршрута.
+	//
+	// GSAP пишет transform прямо в инлайновый стиль, а Vue свой :style заново не
+	// применяет — привязанное значение между рендерами не меняется, значит диффа
+	// нет и перезаписывать нечего. Сдвиг оставался на элементе навсегда. Ключ в
+	// v-for — индекс клетки, поэтому DOM-узел переиспользуется: в Time клетку
+	// тут же засеивают заново, и новый фрукт появлялся по старому сдвигу, а
+	// потом скачком встаёл на место. В Classic то же вылезало с уровня 2, где
+	// modifyTable переносит фишки между клетками.
+	const [srcRow, srcCol] = tile.id.split('-').map(Number)
+	const restingTransform = `translate(${(srcCol - 1) * 100}%, ${
+		(srcRow - 1) * 100
+	}%)`
+
 	const timeline = gsap.timeline({
 		onStart() {
 			isAnimate.value = true
 		},
 		onComplete() {
 			timers['1'] = setTimeout(() => {
+				gsap.killTweensOf(tile)
+				tile.style.transform = restingTransform
 				onComplete()
 				animEnd()
 				isAnimate.value = false
