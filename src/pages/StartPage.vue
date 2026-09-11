@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+
+import OtherGames from '@/components/OtherGames.vue'
 
 import { usePageStore } from '@/store/pageStore'
 
@@ -35,6 +37,8 @@ function handleVisibilityChange() {
 		play('menuMusic')
 	}
 }
+
+const isOtherGames = ref(false)
 </script>
 
 <template>
@@ -73,12 +77,21 @@ function handleVisibilityChange() {
 			</div>
 		</div>
 
+		<button
+			class="promo-more"
+			@click="(isOtherGames = true), playAudio('click')"
+		>
+			Other games
+		</button>
+
 		<a
 			href="https://docs.google.com/document/d/1n50CPwqrjHT-nVk9VynjzNZVxV45Jt4hDKEMcvZJZQk/edit?usp=sharing"
 			target="_blank"
 			class="privacy"
 			>Privacy Policy</a
 		>
+
+		<OtherGames v-if="isOtherGames" @close="isOtherGames = false" />
 	</div>
 </template>
 
@@ -150,5 +163,25 @@ function handleVisibilityChange() {
 	background: rgba(255, 255, 255, 0.3);
 	backdrop-filter: blur(3px);
 	padding: 2px 15px;
+}
+
+/* Кнопка в раздел «Другие игры». Стоит над ссылкой на политику, тем же рядом. */
+.promo-more {
+	align-self: center;
+	margin-bottom: 6px;
+	padding: 8px 18px;
+	border: none;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.86);
+	box-shadow: 0 4px 10px rgba(7, 94, 114, 0.24);
+	cursor: pointer;
+	font-family: LuckiestGuy, sans-serif;
+	font-size: 13px;
+	letter-spacing: 0.6px;
+	color: #0d6e86;
+}
+
+.promo-more:active {
+	transform: translateY(2px);
 }
 </style>

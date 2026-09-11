@@ -4,12 +4,16 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useAdsStore } from '@/store/adsStore'
 import { useAudio } from '@/composables/useAudio'
 
+// Список игр и иконки — из общего модуля, который поддерживает
+// tools/sync-promo.mjs. Раньше здесь был свой promoGames.ts со своим набором
+// иконок в public/img/promo: два списка на репозиторий гарантированно
+// разъезжаются, стоит поменять иконку или снять игру с публикации.
 import {
 	PROMO_GAMES,
 	promoIcon,
-	promoLink,
-	type IPromoGame,
-} from '@/utils/promoGames'
+	storeUrl,
+	type I_PromoGame,
+} from '@/utils/promo'
 
 const ROTATE_MS = 7000
 
@@ -18,7 +22,7 @@ const { playAudio } = useAudio()
 
 // Порядок перемешиваем один раз за сессию, иначе первая игра списка всегда
 // получала бы весь показ, а последние — никогда.
-const order = ref<IPromoGame[]>(
+const order = ref<I_PromoGame[]>(
 	[...PROMO_GAMES].sort(() => (Math.random() > 0.5 ? 1 : -1))
 )
 const index = ref(0)
@@ -72,16 +76,19 @@ function answer(value: number) {
 		return
 	}
 	gateOpen.value = false
-	window.open(promoLink(game.value), '_blank')
+	window.open(storeUrl(game.value), '_blank')
 }
 </script>
 
 <template>
-	<!-- Полоса живёт только до появления баннера AdMob: как только нативный
+	<!-- Полоса живёт, пока в зоне нет настоящего объявления: как только нативный
 	баннер загрузился, он занимает эту же зону, и две рекламы друг на друге не
-	нужны. В браузерной сборке баннера не будет никогда, поэтому промо
-	остаётся. -->
-	<div v-if="!adsStore.bannerInited" class="house-ad">
+	нужны. В браузерной сборке баннера не будет никогда, поэтому промо остаётся.
+
+	Признак — bannerLive, а не bannerInited: последний поднимается один раз при
+	первой загрузке и уже не опускается, поэтому после отказа или снятия баннера
+	промо не возвращалось и в зоне оставалась пустая полоса. -->
+	<div v-if="!adsStore.bannerLive" class="house-ad">
 		<button class="house-ad__body" type="button" @click="openGate">
 			<img :src="promoIcon(game)" :alt="game.title" class="house-ad__icon" />
 			<span class="house-ad__text">
