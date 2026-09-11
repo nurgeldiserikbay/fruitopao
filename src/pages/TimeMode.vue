@@ -1,5 +1,12 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted, ref, shallowRef, computed } from 'vue'
+import {
+	onBeforeUnmount,
+	onMounted,
+	ref,
+	shallowRef,
+	computed,
+	nextTick,
+} from 'vue'
 import gsap from 'gsap'
 import { Capacitor } from '@capacitor/core'
 
@@ -360,6 +367,9 @@ function clearTiles() {
 
 	tiles.value[selectedPoint.value.row][selectedPoint.value.col] = null
 	tiles.value[secondPoint.value.row][secondPoint.value.col] = null
+	// shallowRef следит только за самой ссылкой: без переприсваивания снятые
+	// клетки висели на экране до следующего обновления массива.
+	tiles.value = [...tiles.value]
 	score.value += 20
 	const emptyPoint: TYPE_PATH = [
 		[selectedPoint.value.row, selectedPoint.value.col],
@@ -423,9 +433,17 @@ function moveTileByCoords(
 		},
 		onComplete() {
 			timers['1'] = setTimeout(() => {
-				gsap.killTweensOf(tile)
-				tile.style.transform = restingTransform
 				onComplete()
+				// Сброс только после того, как клетка реально перерисовалась
+				// пустой. Раньше он стоял до onComplete, и фишка отскакивала на
+				// исходную клетку, оставаясь при этом видимой: tiles — это
+				// shallowRef, обнуление ячейки реактивность не запускает, и
+				// пустой клетка становилась лишь на следующем присваивании
+				// массива.
+				void nextTick(() => {
+					gsap.killTweensOf(tile)
+					tile.style.transform = restingTransform
+				})
 				animEnd()
 				isAnimate.value = false
 				delete timers['1']
