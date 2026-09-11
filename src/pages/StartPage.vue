@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 import OtherGames from '@/components/OtherGames.vue'
+import OtherGamesIcon from '@/components/OtherGamesIcon.vue'
 
 import { usePageStore } from '@/store/pageStore'
 
@@ -45,6 +46,17 @@ const isOtherGames = ref(false)
 	<div class="page start-page">
 		<div class="start-page__head">
 			<AudioToggles :size="40" filled />
+
+			<!-- Вход в «Другие игры». Третьим в шапке, в форме тех же тумблеров:
+			     раздел не должен спорить за внимание с кнопками режимов. -->
+			<button
+				class="start-page__games"
+				type="button"
+				aria-label="Other games"
+				@click="(isOtherGames = true), playAudio('click')"
+			>
+				<OtherGamesIcon />
+			</button>
 		</div>
 
 		<div class="start-page__body">
@@ -76,13 +88,6 @@ const isOtherGames = ref(false)
 				</UiButton>
 			</div>
 		</div>
-
-		<button
-			class="promo-more"
-			@click="(isOtherGames = true), playAudio('click')"
-		>
-			Other games
-		</button>
 
 		<a
 			href="https://docs.google.com/document/d/1n50CPwqrjHT-nVk9VynjzNZVxV45Jt4hDKEMcvZJZQk/edit?usp=sharing"
@@ -165,23 +170,40 @@ const isOtherGames = ref(false)
 	padding: 2px 15px;
 }
 
-/* Кнопка в раздел «Другие игры». Стоит над ссылкой на политику, тем же рядом. */
-.promo-more {
-	align-self: center;
-	margin-bottom: 6px;
-	padding: 8px 18px;
-	border: none;
-	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.86);
-	box-shadow: 0 4px 10px rgba(7, 94, 114, 0.24);
-	cursor: pointer;
-	font-family: LuckiestGuy, sans-serif;
-	font-size: 13px;
-	letter-spacing: 0.6px;
-	color: #0d6e86;
+/* Шапка: тумблеры звука и вход в «Другие игры» одним рядом. */
+.start-page__head {
+	align-items: center;
+	gap: 8px;
 }
 
-.promo-more:active {
-	transform: translateY(2px);
+/*
+   Вход в «Другие игры»: форма тумблеров из AudioToggles (filled-вариант), но
+   значок рисуется контуром, а не маской — отдельного svg-файла под него нет.
+*/
+.start-page__games {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: 2px solid rgba(255, 255, 255, 0.72);
+	border-radius: 50%;
+	background-color: rgba(23, 61, 105, 0.72);
+	cursor: pointer;
+	opacity: 0.6;
+	color: #fff;
+	transition: opacity 0.3s linear;
+	touch-action: manipulation;
+}
+
+.start-page__games svg {
+	width: 20px;
+	height: 20px;
+}
+
+.start-page__games:active {
+	opacity: 0.95;
 }
 </style>
