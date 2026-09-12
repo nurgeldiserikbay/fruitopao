@@ -134,6 +134,8 @@ class Admob {
 	private bannerListenersAdded = false
 	/** Объявление уже подтянуто и может быть показано без ожидания загрузки. */
 	private interstitialPrepared = false
+	/** Подготовка уже идёт: второй параллельный запрос только всё сломает. */
+	private interstitialLoading = false
 
 	private adOpenHandlers: (() => void)[] = []
 	private adCloseHandlers: (() => void)[] = []
@@ -314,12 +316,21 @@ class Admob {
 	 * не выходит вовсе. Поэтому грузим заранее, на входе в режим.
 	 */
 	async preloadInterstitial() {
-		if (!this.initialized || this.interstitialPrepared) return
+		// Дожидаемся инициализации так же, как это делает баннер: страница
+		// монтируется раньше, чем AdMob успевает подняться, и предзагрузка без
+		// этого ожидания тихо не делала ничего.
+		await this.initialize().catch(() => {})
+		if (!this.initialized) return
+		if (this.interstitialPrepared || this.interstitialLoading) return
+
+		this.interstitialLoading = true
 		try {
 			await AdMob.prepareInterstitial(this.interstitialOptions())
 			this.interstitialPrepared = true
 		} catch (error) {
 			console.log(error)
+		} finally {
+			this.interstitialLoading = false
 		}
 	}
 
@@ -412,11 +423,14 @@ class Admob {
 			}),
 			await AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => {
 				console.log('FailedToLoad')
+				this.interstitialPrepared = false
 				closeAds()
 			}),
 			await AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, () => {
 				console.log('FailedToShow')
+				this.interstitialPrepared = false
 				closeAds()
+				void this.preloadInterstitial()
 			})
 		)
 
@@ -434,21 +448,41 @@ class Admob {
 		await this.showSystemBars()
 		barsShown = true
 
-		// Загрузку гоняем в скачки с таймаутом: ждать её дольше пяти секунд — это
-		// уже «реклама мешает пользоваться приложением».
-		const loaded = await new Promise<boolean>((resolve) => {
-			timeoutId = setTimeout(() => {
-				console.log('Interstitial load timed out')
-				resolve(false)
-			}, INTERSTITIAL_LOAD_TIMEOUT_MS)
+		// Повторно готовить уже подтянутое объявление нельзя.
+		//
+		// Именно на этом реклама и перестала выходить совсем: предзагрузка на
+		// входе в режим делала своё дело, а здесь код заново звал
+		// prepareInterstitial. Повторная подготовка загруженного объявления не
+		// завершается, срабатывал пятисекундный таймаут — и показ отменялся
+		// каждый раз.
+		let loaded = this.interstitialPrepared
 
-			AdMob.prepareInterstitial(options)
-				.then(() => resolve(true))
-				.catch((error) => {
-					console.log(error)
+		if (!loaded && this.interstitialLoading) {
+			// Предзагрузка ещё в пути. Второй параллельный запрос её сломает,
+			// поэтому этот показ пропускаем — объявление будет к следующему.
+			releaseFlow()
+			restoreBars()
+			return
+		}
+
+		if (!loaded) {
+			this.interstitialLoading = true
+			loaded = await new Promise<boolean>((resolve) => {
+				timeoutId = setTimeout(() => {
+					console.log('Interstitial load timed out')
 					resolve(false)
-				})
-		})
+				}, INTERSTITIAL_LOAD_TIMEOUT_MS)
+
+				AdMob.prepareInterstitial(options)
+					.then(() => resolve(true))
+					.catch((error) => {
+						console.log(error)
+						resolve(false)
+					})
+			})
+			this.interstitialLoading = false
+			this.interstitialPrepared = loaded
+		}
 
 		if (!loaded || isClosed) {
 			// Объявления не будет, а панели уже показаны — возвращаем игру в
