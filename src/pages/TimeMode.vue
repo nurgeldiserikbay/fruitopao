@@ -16,6 +16,7 @@ import AudioToggles from '@/components/AudioToggles.vue'
 import TimerItem from '@/components/TimerItem.vue'
 import ResultTable from '@/components/ResultTable.vue'
 import TileEffects from '@/components/TileEffects.vue'
+import SeedRing from '@/components/SeedRing.vue'
 import WinSparkles from '@/components/WinSparkles.vue'
 
 import { usePageStore } from '@/store/pageStore'
@@ -109,9 +110,11 @@ const seededKeys = ref<number[]>([])
 
 // Отсчёт до подсева. Раньше пары появлялись без предупреждения и читались как
 // случайная помеха — кольцо показывает, что это часть правил режима.
-const seedLeft = ref(100)
-const seedSoon = ref(false)
-let seedTicker: ReturnType<typeof setInterval> | undefined
+// Страница знает про подсев только две неменяющиеся каждый тик величины:
+// сколько ждать и что пора начать заново. Сам отсчёт крутится внутри SeedRing,
+// иначе его тик перерисовывал бы страницу десять раз в секунду.
+const seedDuration = ref(0)
+const seedNonce = ref(0)
 const selectedTile = computed(() => {
 	return (
 		selectedPoint.value &&
@@ -233,22 +236,13 @@ function fillEmptyTiles() {
 }
 
 function startSeedCountdown(duration: number) {
-	const endAt = Date.now() + duration
-	seedLeft.value = 100
-	seedSoon.value = false
-
-	if (seedTicker) clearInterval(seedTicker)
-	seedTicker = setInterval(() => {
-		const left = Math.max(0, endAt - Date.now())
-		seedLeft.value = (left / duration) * 100
-		seedSoon.value = left > 0 && left <= 1500
-		if (left === 0) stopSeedCountdown()
-	}, 100)
+	seedDuration.value = duration
+	seedNonce.value += 1
 }
 
 function stopSeedCountdown() {
-	if (seedTicker) clearInterval(seedTicker)
-	seedTicker = undefined
+	seedDuration.value = 0
+	seedNonce.value += 1
 }
 
 // Подсветка промаха держится ровно на длительность анимации.
@@ -555,11 +549,7 @@ function clearTimers() {
 				@timeend="timeend"
 			/>
 			<div class="page__info">
-				<div
-					:class="{ 'page__seed--soon': seedSoon }"
-					:style="{ '--seed': `${seedLeft}%` }"
-					class="page__seed"
-				></div>
+				<SeedRing :duration="seedDuration" :nonce="seedNonce" />
 
 				<div class="page__score">
 					<img src="@/assets/redesign/icons/star.svg?url" alt="" />
@@ -642,37 +632,6 @@ function clearTimers() {
 		@include hud-capsule;
 	}
 
-	// Кольцо отсчёта до подсева. Убывающий сектор режем маской: сам ассет
-	// статичный, а conic-gradient даёт круговой отсчёт без лишней разметки.
-	&__seed {
-		flex-shrink: 0;
-		width: 24px;
-		height: 24px;
-		background: url('@/assets/redesign/overlays/time-seed-ring.svg') center /
-			contain no-repeat;
-		mask-image: conic-gradient(#000 var(--seed, 100%), transparent 0);
-		-webkit-mask-image: conic-gradient(#000 var(--seed, 100%), transparent 0);
-
-		&--soon {
-			animation: seed-pulse 0.75s ease-in-out;
-		}
-	}
-
-	@keyframes seed-pulse {
-		0%,
-		100% {
-			transform: scale(1);
-		}
-		50% {
-			transform: scale(1.18);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		&__seed--soon {
-			animation: none;
-		}
-	}
 
 	// Таймер стоит между фиксированными плашками, поэтому забирает остаток
 	// строки сам: собственная ширина 80% из TimerItem рядом с номером уровня
