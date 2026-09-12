@@ -29,13 +29,12 @@ const AdMobInitializationOptions = {
 }
 
 // Минимальный интервал между интерстишлами (частотный кап).
-// Частота межстраничной. Раньше она пыталась выйти после КАЖДОГО уровня и
-// упиралась только в минутный интервал. Теперь три ограничения сразу: не чаще
-// раза в 2.5 минуты, не раньше третьего пройденного уровня и дальше через
-// каждые три. Числа вынесены сюда, чтобы крутить частоту в одном месте.
-const INTERSTITIAL_MIN_INTERVAL_MS = 150_000
-const INTERSTITIAL_FIRST_AT_LEVEL = 3
-const INTERSTITIAL_EVERY_N_LEVELS = 3
+// Частота межстраничной: каждые две пройденные игры, начиная со второй.
+// Интервал по времени оставлен страховкой от слишком быстрых уровней и
+// намеренно мягкий — иначе он перебивал бы правило «каждые две игры».
+const INTERSTITIAL_MIN_INTERVAL_MS = 30_000
+const INTERSTITIAL_FIRST_AT_LEVEL = 2
+const INTERSTITIAL_EVERY_N_LEVELS = 2
 
 // Таймаутом ограничена только ЗАГРУЗКА объявления. Показ обрывать нельзя:
 // закрывает объявление сам игрок.
@@ -133,6 +132,9 @@ class Admob {
 
 	// Флаг однократной подписки на события баннера (защита от накопления слушателей).
 	private bannerListenersAdded = false
+	/** Объявление уже подтянуто и может быть показано без ожидания загрузки. */
+	private interstitialPrepared = false
+
 	private adOpenHandlers: (() => void)[] = []
 	private adCloseHandlers: (() => void)[] = []
 
@@ -291,13 +293,45 @@ class Admob {
 		this.interstitialListenerHandles = []
 	}
 
+	private interstitialOptions(): AdOptions {
+		return {
+			// TODO: боевой ID — проверить, что это прод ad unit, а не тестовый.
+			adId: 'ca-app-pub-9702825788968948/3839070057',
+			isTesting: import.meta.env.VITE_APP_MODE === 'TEST',
+			npa: true,
+			// immersiveMode осознанно не выставляем: с Android 15 (edge-to-edge)
+			// он уводит кнопку закрытия рекламы под системные панели/вырез, и
+			// объявление становится незакрываемым — это отказ по Families Policy.
+		}
+	}
+
+	/**
+	 * Заранее подтянуть объявление.
+	 *
+	 * Загрузка занимает до нескольких секунд. Если начинать её в момент
+	 * завершения уровня, игрок успевает нажать «дальше» раньше, чем она
+	 * закончится, — и объявление либо выходит поверх уже начавшейся игры, либо
+	 * не выходит вовсе. Поэтому грузим заранее, на входе в режим.
+	 */
+	async preloadInterstitial() {
+		if (!this.initialized || this.interstitialPrepared) return
+		try {
+			await AdMob.prepareInterstitial(this.interstitialOptions())
+			this.interstitialPrepared = true
+		} catch (error) {
+			console.log(error)
+		}
+	}
+
 	async interstitial({
 		isFirst = false,
 		levelsDone = 0,
+		canShow,
 		onInterstitialAdClosed,
 	}: {
 		isFirst?: boolean
 		levelsDone?: number
+		canShow?: () => boolean
 		onInterstitialAdClosed?: () => void
 	} = {}) {
 		const done = onInterstitialAdClosed ?? (() => {})
@@ -372,6 +406,9 @@ class Admob {
 			await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
 				console.log('Dismissed')
 				closeAds()
+				// Готовим следующее заранее, чтобы к концу очередного уровня оно
+				// уже было на руках.
+				void this.preloadInterstitial()
 			}),
 			await AdMob.addListener(InterstitialAdPluginEvents.FailedToLoad, () => {
 				console.log('FailedToLoad')
@@ -383,15 +420,7 @@ class Admob {
 			})
 		)
 
-		const options: AdOptions = {
-			// TODO: боевой ID — проверить, что это прод ad unit, а не тестовый.
-			adId: 'ca-app-pub-9702825788968948/3839070057',
-			isTesting: import.meta.env.VITE_APP_MODE === 'TEST',
-			npa: true,
-			// immersiveMode осознанно не выставляем: с Android 15 (edge-to-edge)
-			// он уводит кнопку закрытия рекламы под системные панели/вырез, и
-			// объявление становится незакрываемым — это отказ по Families Policy.
-		}
+		const options = this.interstitialOptions()
 
 		// Системные панели возвращаем ДО загрузки, а не перед самым показом.
 		//
@@ -430,6 +459,21 @@ class Admob {
 		}
 
 		clearTimeout(timeoutId)
+		this.interstitialPrepared = false
+
+		// Последняя проверка перед показом: уместен ли он ещё.
+		//
+		// Загрузка занимает секунды, и за это время игрок успевает нажать
+		// «дальше». Раньше объявление в таком случае выходило поверх уже
+		// начавшейся игры — ровно то размещение, которое Google называет
+		// недопустимым. Теперь показ просто отменяется: пропущенный показ лучше
+		// показа не вовремя.
+		if (canShow && !canShow()) {
+			releaseFlow()
+			restoreBars()
+			return
+		}
+
 		this.lastInterstitialShownAt = Date.now()
 
 		watchdogId = setTimeout(() => {

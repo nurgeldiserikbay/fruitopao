@@ -155,7 +155,10 @@ onMounted(async () => {
 	generateTable()
 	selectType()
 
-	// Баннер намеренно не показывается на входе — см. showBannerFromSecondLevel.
+	// Баннер намеренно не показывается на входе — см. watch(level) ниже.
+	// А вот объявление тянем заранее: к концу уровня оно должно быть готово,
+	// иначе показ не успевает к экрану итога.
+	if (Capacitor.getPlatform() === 'android') void Admob.preloadInterstitial()
 })
 
 // Баннер появляется только со второго уровня.
@@ -267,7 +270,12 @@ function clearTiles() {
 		// следующего уровня, и сам уровень ждал его закрытия. Google называет это
 		// недопустимым. Частоту ограничивает рекламный модуль.
 		if (Capacitor.getPlatform() === 'android') {
-			void Admob.interstitial({ levelsDone: level.value + 1 })
+			void Admob.interstitial({
+				levelsDone: level.value + 1,
+				// Пока грузится объявление, игрок может уйти на следующий
+				// уровень: next() снимает isEnd, и показ отменяется.
+				canShow: () => isEnd.value && isWin.value,
+			})
 		}
 
 		return
