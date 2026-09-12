@@ -41,6 +41,11 @@ const INTERSTITIAL_EVERY_N_LEVELS = 3
 // закрывает объявление сам игрок.
 const INTERSTITIAL_LOAD_TIMEOUT_MS = 5000
 
+// Сколько ждать, пока система реально применит возврат системных панелей,
+// прежде чем открывать объявление. Меньше кадра-двух не хватает: SDK успевает
+// снять старые врезки и промахнуться мимо кнопки закрытия.
+const SYSTEM_BARS_SETTLE_MS = 350
+
 // Страховка, если Dismissed не пришёл: снимает только блокировку игрового
 // потока. Системные панели этот путь не трогает — объявление может быть ещё на
 // экране, и возврат immersive-режима спрятал бы кнопку закрытия под панель.
@@ -253,21 +258,30 @@ class Admob {
 	// панелью или вырезом. Ошибки здесь не критичны — реклама всё равно показывается,
 	// просто в полноэкранном виде игры.
 	private async showSystemBars() {
-		try {
-			await Fullscreen.deactivateImmersiveMode()
-			await StatusBar.show()
-		} catch (error) {
-			console.log(error)
-		}
+		// Каждый вызов со своим catch, а не общей цепочкой: падение первого не
+		// должно отменять остальные. Плагин fullscreen стоит версии 0.0.19 при
+		// Capacitor 8 и вполне может отказать — тогда врезки должен вернуть хотя
+		// бы StatusBar.
+		await Fullscreen.deactivateImmersiveMode().catch(() => {})
+		await StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
+		await StatusBar.show().catch(() => {})
+
+		// Пауза перед показом — не суеверие.
+		//
+		// Вызовы выше возвращают управление сразу, а система применяет новые
+		// врезки окна только через кадр-другой. Объявление открывалось следующей
+		// же строкой, и SDK считал позицию кнопки закрытия по СТАРЫМ врезкам
+		// полноэкранного режима — кнопка уезжала под панель или за край экрана,
+		// и объявление становилось незакрываемым.
+		await new Promise((resolve) =>
+			setTimeout(resolve, SYSTEM_BARS_SETTLE_MS)
+		)
 	}
 
 	private async restoreImmersiveMode() {
-		try {
-			await Fullscreen.activateImmersiveMode()
-			await StatusBar.hide()
-		} catch (error) {
-			console.log(error)
-		}
+		await Fullscreen.activateImmersiveMode().catch(() => {})
+		await StatusBar.hide().catch(() => {})
+		await StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {})
 	}
 
 	private async clearInterstitialListeners() {
