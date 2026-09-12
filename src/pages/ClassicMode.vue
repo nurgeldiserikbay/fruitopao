@@ -6,6 +6,7 @@ import {
 	shallowRef,
 	computed,
 	nextTick,
+	watch,
 } from 'vue'
 import { Capacitor } from '@capacitor/core'
 import gsap from 'gsap'
@@ -132,10 +133,22 @@ onMounted(async () => {
 
 	generateTable()
 
+	// Баннер намеренно не показывается на входе — см. showBannerFromSecondLevel.
+})
+
+// Баннер появляется только со второго уровня.
+//
+// Раньше он возникал сразу на входе в режим: реклама встречала игрока первым
+// же экраном игры — это самая раздражающая её позиция и первое, что бросается
+// в глаза в отзывах. До этого момента в той же полосе живёт промо своих игр,
+// так что место не пустует.
+let bannerRequested = false
+
+watch(level, async (value) => {
+	if (value < 1 || bannerRequested) return
+	bannerRequested = true
 	try {
-		if (Capacitor.getPlatform() === 'android') {
-			await Admob.showBanner()
-		}
+		if (Capacitor.getPlatform() === 'android') await Admob.showBanner()
 	} catch (error: any) {
 		// console.log(error)
 	}
@@ -269,7 +282,7 @@ function clearTiles() {
 		// следующего уровня, и сам уровень ждал его закрытия. Google называет это
 		// недопустимым. Частоту ограничивает рекламный модуль.
 		if (Capacitor.getPlatform() === 'android') {
-			void Admob.interstitial()
+			void Admob.interstitial({ levelsDone: level.value + 1 })
 		}
 
 		return

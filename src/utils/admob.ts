@@ -29,7 +29,13 @@ const AdMobInitializationOptions = {
 }
 
 // Минимальный интервал между интерстишлами (частотный кап).
-const INTERSTITIAL_MIN_INTERVAL_MS = 60_000
+// Частота межстраничной. Раньше она пыталась выйти после КАЖДОГО уровня и
+// упиралась только в минутный интервал. Теперь три ограничения сразу: не чаще
+// раза в 2.5 минуты, не раньше третьего пройденного уровня и дальше через
+// каждые три. Числа вынесены сюда, чтобы крутить частоту в одном месте.
+const INTERSTITIAL_MIN_INTERVAL_MS = 150_000
+const INTERSTITIAL_FIRST_AT_LEVEL = 3
+const INTERSTITIAL_EVERY_N_LEVELS = 3
 
 // Таймаутом ограничена только ЗАГРУЗКА объявления. Показ обрывать нельзя:
 // закрывает объявление сам игрок.
@@ -122,6 +128,20 @@ class Admob {
 
 	// Флаг однократной подписки на события баннера (защита от накопления слушателей).
 	private bannerListenersAdded = false
+	private adOpenHandlers: (() => void)[] = []
+	private adCloseHandlers: (() => void)[] = []
+
+	// Полноэкранная реклама открылась и закрылась. Нужна интерфейсу, чтобы
+	// глушить музыку на время показа: сам плагин звук игры не трогает, и
+	// объявление шло поверх играющей музыки.
+	onAdOpen(handler: () => void) {
+		this.adOpenHandlers.push(handler)
+	}
+
+	onAdClose(handler: () => void) {
+		this.adCloseHandlers.push(handler)
+	}
+
 	private bannerLoadedHandlers: (() => void)[] = []
 	private bannerSizeHandlers: ((height: number) => void)[] = []
 
@@ -259,9 +279,11 @@ class Admob {
 
 	async interstitial({
 		isFirst = false,
+		levelsDone = 0,
 		onInterstitialAdClosed,
 	}: {
 		isFirst?: boolean
+		levelsDone?: number
 		onInterstitialAdClosed?: () => void
 	} = {}) {
 		const done = onInterstitialAdClosed ?? (() => {})
@@ -290,6 +312,7 @@ class Admob {
 		const closeAds = () => {
 			releaseFlow()
 			restoreBars()
+			this.adCloseHandlers.forEach((handler) => handler())
 		}
 
 		// Инициализация ещё не завершилась — пропускаем показ и сразу возвращаем
@@ -304,8 +327,14 @@ class Admob {
 		// капом. Не показываем на первом уровне и чаще, чем раз в
 		// INTERSTITIAL_MIN_INTERVAL_MS.
 		const now = Date.now()
+		const tooEarlyByLevel =
+			levelsDone > 0 &&
+			(levelsDone < INTERSTITIAL_FIRST_AT_LEVEL ||
+				levelsDone % INTERSTITIAL_EVERY_N_LEVELS !== 0)
+
 		if (
 			isFirst ||
+			tooEarlyByLevel ||
 			now - this.lastInterstitialShownAt < INTERSTITIAL_MIN_INTERVAL_MS
 		) {
 			releaseFlow()
@@ -323,6 +352,9 @@ class Admob {
 					console.log(info)
 				}
 			),
+			await AdMob.addListener(InterstitialAdPluginEvents.Showed, () => {
+				this.adOpenHandlers.forEach((handler) => handler())
+			}),
 			await AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => {
 				console.log('Dismissed')
 				closeAds()

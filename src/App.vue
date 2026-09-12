@@ -9,6 +9,7 @@ import { Fullscreen } from '@boengli/capacitor-fullscreen'
 import Admob from '@/utils/admob'
 
 import { usePageStore } from '@/store/pageStore'
+import { useAudio } from '@/composables/useAudio'
 
 import SceneWrapper from '@/components/SceneWrapper.vue'
 import HouseAd from '@/components/HouseAd.vue'
@@ -21,6 +22,7 @@ import gameBg from '@/assets/redesign/backgrounds/game-calm.webp'
 import { useAdsStore } from '@/store/adsStore'
 
 const pageStore = usePageStore()
+const { pauseForAd, resumeAfterAd } = useAudio()
 const adsStore = useAdsStore()
 
 // Промо своих игр показываем только в режимах: на главном меню баннера нет,
@@ -56,6 +58,9 @@ onMounted(async () => {
 
 		void Admob.initialize().catch(() => {})
 		Admob.onBannerLoaded(() => adsStore.bannerInit())
+		// Музыка на паузу на время полноэкранной рекламы и обратно после неё.
+		Admob.onAdOpen(() => pauseForAd())
+		Admob.onAdClose(() => resumeAfterAd())
 		Admob.onBannerSize((height) => adsStore.setBannerHeight(height))
 	}
 

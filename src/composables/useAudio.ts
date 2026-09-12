@@ -19,6 +19,9 @@ const musicActive = ref(true)
 
 let music: { [key: string]: HTMLAudioElement } = {}
 
+// Что было поставлено на паузу ради рекламы — чтобы вернуть ровно это.
+let pausedByAd: string[] = []
+
 // Preloaded pool of SFX elements reused round-robin so we don't
 // allocate a brand new Audio() (with its own listeners) on every effect.
 const sfxPool: { [key: string]: HTMLAudioElement[] } = {}
@@ -113,6 +116,31 @@ export const useAudio = () => {
 		if (music[name]) music[name].pause()
 	}
 
+	// Пауза на время полноэкранной рекламы.
+	//
+	// Плагин AdMob звук игры не трогает, поэтому объявление шло поверх играющей
+	// музыки. Ставим на паузу именно то, что играло, и запоминаем список: после
+	// рекламы вернуть надо ровно это, а не «включить музыку вообще». Настройку
+	// musicActive не трогаем — если игрок сам выключил музыку, она и останется
+	// выключенной.
+	function pauseForAd() {
+		pausedByAd = Object.entries(music)
+			.filter(([, audio]) => !audio.paused)
+			.map(([name, audio]) => {
+				audio.pause()
+				return name
+			})
+	}
+
+	function resumeAfterAd() {
+		if (musicActive.value) {
+			pausedByAd.forEach((name) => {
+				music[name]?.play().catch(() => {})
+			})
+		}
+		pausedByAd = []
+	}
+
 	return {
 		audioActive,
 		musicActive,
@@ -121,5 +149,7 @@ export const useAudio = () => {
 		toggleMusic,
 		play,
 		stop,
+		pauseForAd,
+		resumeAfterAd,
 	}
 }
